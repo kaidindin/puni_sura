@@ -113,6 +113,13 @@ body.fever #board{background:rgba(255,255,255,.12)}
   font-size:14px;font-weight:800;line-height:1.55;text-align:center;box-shadow:0 6px 16px rgba(0,0,0,.4);
   animation:tutPop .4s cubic-bezier(.2,1.6,.4,1)}
 #tutMsg b{color:#e0553d}
+#shuffleBtn{display:none;margin:6px auto 2px;z-index:7;
+  font-family:'Mochiy Pop One';font-size:15px;color:#3a2b52;border:none;
+  background:linear-gradient(180deg,#ffe680,#ffd644);padding:11px 28px;border-radius:99px;
+  box-shadow:0 5px 0 #d4a017,0 8px 20px rgba(255,214,68,.6);
+  animation:shufGlow 1s ease-in-out infinite alternate}
+#shuffleBtn:active{transform:translateY(4px);box-shadow:0 1px 0 #d4a017}
+@keyframes shufGlow{from{box-shadow:0 5px 0 #d4a017,0 6px 14px rgba(255,214,68,.5);filter:brightness(1)}to{box-shadow:0 5px 0 #d4a017,0 8px 26px rgba(255,214,68,.9);filter:brightness(1.12)}}
 #tutMsg .tutNext{margin-top:10px;display:inline-block;background:linear-gradient(180deg,#ffe066,#ffd644);
   padding:8px 22px;border-radius:99px;font-size:14px;box-shadow:0 3px 0 #d4a017}
 @keyframes tutPop{0%{transform:translateX(-50%) scale(.6);opacity:0}100%{transform:translateX(-50%) scale(1);opacity:1}}
@@ -172,7 +179,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <button class="btn primary pop" onclick="Game.selectCpu()">ひとりで対戦<small>CPUとバトル</small></button>
     <button class="btn" onclick="Game.startTutorial()">はじめての人へ<small>あそびかたを 1から おしえるよ</small><span class="badge">入門</span></button>
     <button class="btn" onclick="Game.startTA()"><span class="btnIco" data-ico="timer"></span>タイムアタック<small>タイムのおにを倒せ!全国ランキング</small></button>
-    <button class="btn" onclick="Game.startVs()">ふたりで対戦<small>1台のスマホで交代バトル</small></button>
+    <button class="btn" onclick="UI.show('vstime')">ふたりで対戦<small>1台のスマホで交代バトル</small></button>
     <button class="btn ghost" onclick="Game.showRanking()">ランキング</button>
     <button class="btn ghost" onclick="UI.show('howto')">あそびかた</button>
   </div>
@@ -188,13 +195,26 @@ body.fever #board{background:rgba(255,255,255,.12)}
   </div>
 </div>
 
+<div class="screen hidden" id="vstime">
+  <h2 class="pop" style="font-size:24px;margin-bottom:8px">ふたりで対戦</h2>
+  <div class="sub" style="margin-bottom:18px;font-size:13px;opacity:.85">せいげんじかんを えらんでね<br>時間切れは HPが多いほうの勝ち!</div>
+  <div class="menu">
+    <button class="btn" onclick="Game.startVs(1)">⏱ 1分<small>さくっと 短期決戦</small></button>
+    <button class="btn primary" onclick="Game.startVs(3)">⏱ 3分<small>ちょうどいい</small></button>
+    <button class="btn" onclick="Game.startVs(5)">⏱ 5分<small>じっくり</small></button>
+    <button class="btn" onclick="Game.startVs(10)">⏱ 10分<small>長期戦</small></button>
+    <button class="btn" onclick="Game.startVs(0)">∞ 無制限<small>HPが0になるまで</small></button>
+    <button class="btn ghost" onclick="UI.show('title')">もどる</button>
+  </div>
+</div>
+
 <div class="screen hidden" id="howto">
   <div class="card">
     <h2>あそびかた</h2>
     <div class="howRow"><div class="howIcon" data-ico="swipe"></div><div><b>スワイプ</b>すると、ぷにが<b>全員その方向へ</b>ころがる!</div></div>
     <div class="howRow"><div class="howIcon" data-ico="match"></div><div>同じ色が<b>タテヨコ3つ</b>ならぶと消えて、あいてにダメージ!</div></div>
     <div class="howRow"><div class="howIcon" data-ico="gravity"></div><div>スワイプした向きに<b>重力</b>もかわる。連鎖もその向きに落ちる!</div></div>
-    <div class="howRow"><div class="howIcon" data-ico="gauge"></div><div>スワイプするたび敵の<b>こうげきゲージ</b>が進む。<b>なにも消えないスワイプは2倍進む!</b>むだ振り禁止!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="gauge"></div><div>スワイプするたび敵の<b>こうげきゲージ</b>が進む。<b>なにも消えなかったスワイプ(むだ振り)は2倍進む!</b>てきとうに振らないで!</div></div>
     <div class="howRow"><div class="howIcon" data-ico="fever"></div><div>ぷにをたくさん消すと<b>フィーバー</b>!ダメージ2倍タイム!</div></div>
     <div class="howRow"><div class="howIcon" data-ico="double"></div><div><b>2か所同時消し</b>はダメージ1.5倍。連鎖とあわせて大爆発!</div></div>
     <div class="howRow"><div class="howIcon" data-ico="rock"></div><div>敵の<b>いわ</b>は、となりで消すとわれてボーナス!</div></div>
@@ -234,6 +254,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <div id="guide" style="display:none"><div class="arrow" id="guideArrow">👆</div><div id="guideText">スワイプで ぜんいん ころがる!</div></div>
     <div id="tutMsg" style="display:none"></div>
   </div>
+  <button id="shuffleBtn" onclick="Game.doShuffle()" style="display:none">🔀 シャッフル</button>
   <div class="meBar">
     <svg class="face" id="meFace" viewBox="0 0 60 60"></svg>
     <div class="hpWrap" id="meHp">
@@ -266,7 +287,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v2.5</div>
+<div class="credit">© カイディンディン ・ v3.1</div>
 <script>
 "use strict";
 /* =========================================================
@@ -343,7 +364,9 @@ const Sfx = {
     this.tone(base*4,0.05,'sine',0.04,base*2,i*0.03+dur*0.7);
   },
   // ころころ(スワイプ)
-  swipe(){ this.noise(.1,.07,0,1500); this.tone(350,.12,'sine',.09,260); this.tone(500,.08,'sine',.05,180,.05); },
+  // ぷにが「ころん」と転がる音(ノイズなし)
+  // ぷにが「ぽろろん」と転がる まるい音
+  swipe(){ this.tone(523,.08,'sine',.08,40); this.tone(659,.08,'sine',.07,30,.035); this.tone(784,.09,'sine',.06,20,.07); this.tone(1047,.06,'sine',.03,10,.1); },
   // ぷにぷにファンファーレ(連鎖)
   chainVoice(c){
     const root=392*Math.pow(1.12,Math.min(c,8));
@@ -559,16 +582,25 @@ const Board={
     }
   },
   gc(){ this.cells=this.cells.filter(c=>!c.dead||(c.popT||0)<1); },
+  // 指定方向にslideを試し、{動いたか,揃ったか}を返して盤面を完全に元へ戻す(順序も復元)
+  _trySlide(d){
+    const order=this.cells.slice();
+    const pos=order.map(c=>[c.gx,c.gy]);
+    const moved=this.slide(d);
+    const matched=this.findMatches().length>0;
+    this.cells=order;
+    order.forEach((c,i)=>{ c.gx=pos[i][0]; c.gy=pos[i][1]; });
+    return {moved,matched};
+  },
   // 4方向どれかで1個でも動くか(=詰みでないか)
   canMove(){
-    const snap=this.cells.filter(c=>!c.dead).map(c=>({c,gx:c.gx,gy:c.gy}));
-    let ok=false;
-    for(const d of ['L','R','U','D']){
-      if(this.slide(d)) ok=true;
-      snap.forEach(s=>{ s.c.gx=s.gx; s.c.gy=s.gy; });
-      if(ok) break;
-    }
-    return ok;
+    for(const d of ['L','R','U','D']) if(this._trySlide(d).moved) return true;
+    return false;
+  },
+  // 1手で消せる手があるか
+  canClear(){
+    for(const d of ['L','R','U','D']) if(this._trySlide(d).matched) return true;
+    return false;
   },
   // 色だけシャッフルして必ず動ける&即マッチ無しの状態にする
   shuffle(){
@@ -585,6 +617,27 @@ const Board={
     while(this.findMatches().length && guard++<80){
       const m=this.findMatches(); m[0].color=(m[0].color+1)%5;
     }
+  },
+  // 消せる手が枯れた時の救済:消せる手がある盤面になるまで作り直す(岩は消える)
+  rescue(){
+    let guard=0;
+    do{ this.reset(); guard++; } while(!this.canClear() && guard<40);
+  },
+  // 岩の数を保ったままシャッフル(岩消しの抜け道を封じる)。マッチなし&消せる手ありを保証
+  shuffleKeepRocks(){
+    const rockCount=this.cells.filter(c=>!c.dead&&c.rock).length;
+    const puniCount=Math.min(28, 36-rockCount-4); // 空きを最低4確保
+    let guard=0;
+    do{
+      const positions=[];
+      for(let y=0;y<N;y++)for(let x=0;x<N;x++) positions.push([x,y]);
+      for(let i=positions.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [positions[i],positions[j]]=[positions[j],positions[i]]; }
+      const cells2=[]; let idx=0;
+      for(let r=0;r<rockCount;r++){ const [x,y]=positions[idx++]; cells2.push(this.mk(x,y,0,true)); }
+      for(let p=0;p<puniCount;p++){ const [x,y]=positions[idx++]; cells2.push(this.mk(x,y,Math.floor(Math.random()*5))); }
+      this.cells=cells2;
+      guard++;
+    } while((this.findMatches().length>0 || !this.canClear()) && guard<60);
   }
 };
 
@@ -832,8 +885,9 @@ const Game={
     this.begin();
   },
 
-  startVs(){
+  startVs(minutes){
     this.mode='vs'; this.vsTurn=0; this.vsSwipes=5; this.foeMax=100;
+    this.vsTimeLimit=(minutes||0)*60; this.vsTimeLeft=this.vsTimeLimit; // 0=無制限
     document.getElementById('foeName').textContent='2P(れもん)';
     document.getElementById('meName').textContent='1P(そら)';
     setFace('meFace','me'); setFace('foeFace','me2');
@@ -851,7 +905,7 @@ const Game={
     this.updateHp(); this.updateGauges();
     document.getElementById('chainLabel').style.opacity=0;
     document.getElementById('atkGauge').style.display=this.mode==='vs'?'none':'block';
-    this.hintActive=false; this.lastClear=performance.now();
+    this.hintActive=false; this.lastClear=performance.now(); this.hideShuffleBtn();
     const guide=document.getElementById('guide');
     guide.className=''; // hintクラス等をリセット
     document.getElementById('guideArrow').textContent='👆';
@@ -869,6 +923,12 @@ const Game={
         if(!this.over){
           if(this.mode!=='vs'&&!this._counting) this.idleTick(dt);
           if(this.fever&&performance.now()>this.feverEnd) this.setFever(false);
+          // VS制限時間のカウントダウン(カウントダウン中と処理中は止める)
+          if(this.mode==='vs'&&this.vsTimeLimit>0&&!this._counting&&!this.busy){
+            this.vsTimeLeft-=dt;
+            if(this.vsTimeLeft<=0){ this.vsTimeLeft=0; this.vsTimeUp(); }
+            this.updateTurnLabel();
+          }
         }
       }catch(err){
         console.error('loop error(描画は継続):',err); // 何が起きても下で必ず次フレームを予約
@@ -903,7 +963,7 @@ const Game={
     this.over=true; this.busy=true;
     cancelAnimationFrame(this.raf); this.raf=0;
     Sfx.stopBgm(); this.setFever(false,true);
-    this.hideGuide();
+    this.hideGuide(); this.hideShuffleBtn();
     UI.show('title');
   },
 
@@ -916,14 +976,7 @@ const Game={
 
   // 1手で1個でも消せる方向を探す(見つからなければnull)。盤面は元に戻す
   findHintMove(){
-    const snap=Board.cells.filter(c=>!c.dead).map(c=>({c,gx:c.gx,gy:c.gy}));
-    const restore=()=>snap.forEach(s=>{ s.c.gx=s.gx; s.c.gy=s.gy; });
-    for(const d of ['L','R','U','D']){
-      Board.slide(d);
-      const hit=Board.findMatches().length>0;
-      restore();
-      if(hit) return d;
-    }
+    for(const d of ['L','R','U','D']) if(Board._trySlide(d).matched) return d;
     return null;
   },
 
@@ -948,6 +1001,8 @@ const Game={
       board:[[3,0,0],[3,2,0],[3,4,0], [0,0,2],[1,0,4]] },
     { msg:'その調子!<br><b>2か所いっぺんに消す</b>と ダメージ2倍!<br>よこに スワイプしてみて', dir:'R',
       board:[[0,1,1],[2,1,1],[4,1,1], [0,4,2],[2,4,2],[4,4,2]] },
+    { msg:'たいせつな はなし。<br>スワイプしても <b>なにも消えない</b>ことを「<b>むだ振り</b>」と いうよ。<br>むだ振りすると 敵の こうげきゲージが <b>2ばい</b> すすんじゃう!よく見て 振ろうね', dir:null, noPop:true,
+      board:[[2,0,1],[2,2,3],[2,4,0], [4,3,2],[4,4,4]] },
     { msg:'かんぺき!<br>あとは <b>じゆうに スワイプ</b>して たくさん消してみよう!<br>3回 消したら 卒業だよ🎓', dir:null, free:3,
       board:null },
   ],
@@ -967,6 +1022,7 @@ const Game={
 
   beginTutorial(){
     R.init(); this.over=false; this.busy=false;
+    this.hideShuffleBtn();
     this.atkGauge=0; this.feverGauge=0; this.setFever(false,true);
     this.stats={maxChain:0,pops:0,rocks:0,dmg:0,doubles:0,gold:false,taTime:0,time:performance.now()};
     this.firstPlay=false;
@@ -1013,6 +1069,14 @@ const Game={
   // チュートリアルのスワイプ後処理(swipeから呼ぶ)。消せたら次へ
   tutAfterSwipe(popped){
     const step=this.TUT_STEPS[this.tutStep];
+    // むだ振り体験ステップ:振ったら(消えなくても)次へ
+    if(step.noPop){
+      if(popped>0){ Sfx.chainVoice(2); } else { this.foeSay('いまのが むだ振り!'); }
+      this.tutStep++;
+      if(this.tutStep>=this.TUT_STEPS.length){ this.finishTutorial(); return; }
+      setTimeout(()=>this.loadTutStep(this.tutStep), 900);
+      return;
+    }
     if(popped<=0) return; // 消せなかったら同じステップのまま
     Sfx.chainVoice(2);
     if(step.free){
@@ -1042,6 +1106,28 @@ const Game={
     UI.show('result');
   },
 
+  // シャッフルボタンを出す(urgent=詰みで即・そうでなければ15秒手詰まり)
+  showShuffleBtn(urgent){
+    const b=document.getElementById('shuffleBtn');
+    if(b.style.display==='block') return;
+    b.style.display='block';
+    b.textContent='🔀 シャッフル';
+    this.shuffleReady=true;
+  },
+  hideShuffleBtn(){
+    document.getElementById('shuffleBtn').style.display='none';
+    this.shuffleReady=false;
+  },
+  doShuffle(){
+    if(!this.shuffleReady||this.busy) return;
+    Board.shuffleKeepRocks(); // 岩の数は維持
+    Sfx.go(); this.cutin('シャッフル!');
+    this.hideShuffleBtn();
+    this.lastClear=performance.now(); // タイマーもリセット
+    // ヒント矢印が出ていたら消す
+    this.hideGuide();
+  },
+
   cutin(text){
     const el=document.getElementById('cutinText');
     el.textContent=text; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
@@ -1049,7 +1135,31 @@ const Game={
 
   updateTurnLabel(){
     const el=document.getElementById('turnLabel');
-    el.textContent=this.mode==='vs'?`${this.vsTurn===0?'1P':'2P'}のばん のこり${this.vsSwipes}スワイプ`:'';
+    if(this.mode!=='vs'){ el.textContent=''; return; }
+    let t='';
+    if(this.vsTimeLimit>0){
+      const sec=Math.ceil(this.vsTimeLeft);
+      const m=Math.floor(sec/60), s=sec%60;
+      t=`⏱${m}:${String(s).padStart(2,'0')} `;
+    }
+    el.textContent=`${t}${this.vsTurn===0?'1P':'2P'}のばん(のこり${this.vsSwipes})`;
+  },
+
+  vsTimeUp(){
+    if(this.over) return;
+    this.over=true; this.busy=true; Sfx.stopBgm();
+    const winner=this.meHp>this.foeHp?'1P(そら)':this.foeHp>this.meHp?'2P(れもん)':null;
+    setTimeout(()=>{
+      Sfx.win();
+      const big=document.getElementById('resultText');
+      big.textContent=winner?winner+'のかち!':'ひきわけ!';
+      big.className='big pop '+(winner?'win':'lose');
+      document.getElementById('shougou').textContent=winner?'称号:じかんない王者':'称号:ごかくの ライバル';
+      document.getElementById('resultStats').innerHTML=
+        `⏱ 時間切れ!<br>1P(そら) のこりHP <b>${Math.ceil(this.meHp)}</b><br>2P(れもん) のこりHP <b>${Math.ceil(this.foeHp)}</b>`;
+      this._share={winText:winner?winner+'のかち!':'ひきわけ!',isWin:!!winner,title:winner?'じかんない王者':'ごかくのライバル',sec:0};
+      UI.show('result');
+    },500);
   },
 
   updateGauges(){
@@ -1078,12 +1188,16 @@ const Game={
     this.atkGauge+=this.atkCfg.idle*dt;
     if(this.atkGauge>=100) this.foeAttack();
     this.updateGauges();
-    // 行き詰まりヒント:よわよわ限定、10秒消せなかったら消せる方向を教える
+    // 行き詰まりヒント:よわよわ限定、消せる盤面ならすぐ矢印で教える
     if(this.level===0 && this.mode==='cpu' && !this.hintActive && !this.firstPlay){
-      if(performance.now()-this.lastClear > 10000){
+      if(performance.now()-this.lastClear > 5000){
         const dir=this.findHintMove();
         if(dir) this.showHint(dir);
       }
+    }
+    // 15秒以上ぷにを消せていない時、シャッフルボタンを出す(手動救済)
+    if(!this.firstPlay && !this.shuffleReady && performance.now()-this.lastClear > 15000){
+      this.showShuffleBtn(false);
     }
   },
 
@@ -1155,7 +1269,7 @@ const Game={
         await wait(170);
       }
       if(totalDmg>0) this.dealDamage(totalDmg,chain);
-      if(totalPops>0) this.lastClear=performance.now(); // 消せたのでヒントタイマーをリセット
+      if(totalPops>0){ this.lastClear=performance.now(); this.hideShuffleBtn(); } // 消せたのでタイマー・ボタンをリセット
       this.stats.maxChain=Math.max(this.stats.maxChain,chain);
       this.stats.pops+=totalPops; this.stats.rocks+=totalRocks;
 
@@ -1165,7 +1279,7 @@ const Game={
       // 敵ゲージ:スワイプごとに進む。空振りは2倍!
       if((this.mode==='cpu'||this.mode==='ta')&&!this.over){
         this.atkGauge+=this.atkCfg.perSwipe*(anyMatch?1:2);
-        if(!anyMatch) this.foeSay('むだ振り!チャンス!');
+        if(!anyMatch) this.foeSay('むだ振り!(なにも消えない)');
         if(this.atkGauge>=100) this.foeAttack();
         this.updateGauges();
       }
@@ -1175,11 +1289,18 @@ const Game={
         const live=Board.cells.filter(c=>!c.dead);
         for(let i=0;i<4;i++){ const c=live[Math.floor(Math.random()*live.length)]; if(!c.dead){ c.dead=true; c.popT=0; if(!c.rock)R.burst(c.gx,c.gy,c.color); } }
         Sfx.rock(); this.cutin('ぎゅうぎゅう!');
+        await wait(200);
       }
 
-      // 詰み救済:どの方向にも動かせなくなったらシャッフル
-      if(!this.over && !Board.canMove()){
-        Board.shuffle(); Sfx.go(); this.cutin('シャッフル!');
+      // 消し残り掃除:満杯処理などで揃ったぷにも必ず消す(消え残りバグ対策)
+      let cleanup=0;
+      while(Board.findMatches().length && cleanup++<10){
+        const cm=Board.findMatches();
+        Board.clear(cm);
+        cm.forEach((c,i)=>{ if(!c.rock)R.burst(c.gx,c.gy,c.color); Sfx.pop(1,i); });
+        await wait(240);
+        Board.refill(dir,0); Board.slide(dir);
+        await wait(150);
       }
 
       if(this.mode==='vs'&&!this.over){
@@ -1257,7 +1378,7 @@ const Game={
     }
   },
 
-  retry(){ this.mode==='cpu'?this.startCpu(this.level):this.mode==='ta'?this.startTA():this.mode==='tutorial'?this.startTutorial():this.startVs(); },
+  retry(){ this.mode==='cpu'?this.startCpu(this.level):this.mode==='ta'?this.startTA():this.mode==='tutorial'?this.startTutorial():this.startVs((this.vsTimeLimit||0)/60); },
 
   shareX(){
     const s=this._share||{};
@@ -1307,6 +1428,9 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
   window.addEventListener('pointerdown',onDown);
   window.addEventListener('pointerup',onUp);
   window.addEventListener('pointercancel',()=>{ active=false; });
+  // ゲーム中は指の移動でブラウザが「前のページに戻る/スクロール」しないよう抑制
+  document.addEventListener('touchmove',e=>{ if(inGame()) e.preventDefault(); },{passive:false});
+  document.addEventListener('touchstart',e=>{ if(inGame()&&e.touches[0]&&e.touches[0].clientX<30) e.preventDefault(); },{passive:false});
   window.addEventListener('keydown',e=>{
     const m={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D'};
     if(m[e.key]&&inGame()){ e.preventDefault(); Game.swipe(m[e.key]); }
@@ -1342,6 +1466,19 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
 })();
 
 /* ---------- PWA Service Worker(同階層のsw.jsがあれば) ---------- */
+/* ---------- 戻る/端スワイプでサイトから出てしまうのを防ぐ ---------- */
+(()=>{
+  // ダミー履歴を積んでおき、「戻る」が来たら押し戻す
+  try{ history.pushState(null,'',location.href); }catch(e){}
+  window.addEventListener('popstate',()=>{
+    try{ history.pushState(null,'',location.href); }catch(e){}
+    // ゲーム中に戻るジェスチャーされたら、確認ダイアログを出す(いきなり離脱させない)
+    if(!document.getElementById('game').classList.contains('hidden') && !Game.over){
+      Game.quit();
+    }
+  });
+})();
+
 if('serviceWorker' in navigator && location.protocol==='https:'){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
