@@ -71,7 +71,9 @@ button{font-family:inherit;border:none;cursor:pointer}
 #howto h2{font-size:22px;margin-bottom:10px;color:var(--lemon);text-align:center}
 #howto b{color:var(--lemon)}
 .howRow{display:flex;align-items:center;gap:10px;margin:7px 0}
-.howIcon{font-size:22px;width:32px;text-align:center;flex-shrink:0}
+.howIcon{font-size:22px;width:32px;height:32px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.btnIco{display:inline-flex;width:1.5em;height:1.5em;vertical-align:middle;margin-right:7px;flex-shrink:0}
+.btnIco img,.howIcon img,img.icoImg{width:100%;height:100%;object-fit:contain;display:block}
 
 #game{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;z-index:5;
   padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom))}
@@ -104,9 +106,12 @@ button{font-family:inherit;border:none;cursor:pointer}
 body.fever #board{background:rgba(255,255,255,.12)}
 #fx{position:absolute;inset:0;pointer-events:none;z-index:3}
 #guide{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(20,12,40,.55);border-radius:20px;font-size:15px;font-weight:800;gap:8px;pointer-events:none;transition:opacity .4s}
+  background:rgba(20,12,40,.55);border-radius:20px;font-size:15px;font-weight:800;gap:8px;pointer-events:none;transition:opacity .4s;text-align:center;padding:0 20px}
+#guide.hint{background:rgba(20,12,40,.28)}
 #guide .arrow{font-size:44px;animation:guideMove 1.5s ease-in-out infinite}
+#guide.dir-U .arrow,#guide.dir-D .arrow{animation:guideMoveV 1.3s ease-in-out infinite}
 @keyframes guideMove{0%,100%{transform:translateX(-30px)}50%{transform:translateX(30px)}}
+@keyframes guideMoveV{0%,100%{transform:translateY(-24px)}50%{transform:translateY(24px)}}
 
 .midInfo{width:min(430px,96vw);display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;min-height:20px}
 #chainLabel{color:var(--lemon);opacity:0;transition:opacity .2s;font-family:'Mochiy Pop One'}
@@ -151,7 +156,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
   <div id="goldHint"></div>
   <div class="menu">
     <button class="btn primary pop" onclick="Game.selectCpu()">ひとりで対戦<small>CPUとバトル</small></button>
-    <button class="btn" onclick="Game.startTA()">タイムアタック<small>タイムのおにを倒せ!全国ランキング</small><span class="badge">全国!</span></button>
+    <button class="btn" onclick="Game.startTA()"><span class="btnIco" data-ico="timer"></span>タイムアタック<small>タイムのおにを倒せ!全国ランキング</small><span class="badge">全国!</span></button>
     <button class="btn" onclick="Game.startVs()">ふたりで対戦<small>1台のスマホで交代バトル</small></button>
     <button class="btn ghost" onclick="Game.showRanking()">ランキング</button>
     <button class="btn ghost" onclick="UI.show('howto')">あそびかた</button>
@@ -161,9 +166,9 @@ body.fever #board{background:rgba(255,255,255,.12)}
 <div class="screen hidden" id="level">
   <h2 class="pop" style="font-size:26px;margin-bottom:20px">あいての つよさ</h2>
   <div class="menu">
-    <button class="btn" onclick="Game.startCpu(0)">🐣 よわよわ<small>のんびり練習したい人へ</small></button>
-    <button class="btn primary" onclick="Game.startCpu(1)">😈 ふつう<small>ちょうどいい歯ごたえ</small></button>
-    <button class="btn" onclick="Game.startCpu(2)">👹 おにつよ<small>勝てたら自慢していい</small></button>
+    <button class="btn" onclick="Game.startCpu(0)"><span class="btnIco" data-ico="weak"></span>よわよわ<small>のんびり練習したい人へ</small></button>
+    <button class="btn primary" onclick="Game.startCpu(1)"><span class="btnIco" data-ico="normal"></span>ふつう<small>ちょうどいい歯ごたえ</small></button>
+    <button class="btn" onclick="Game.startCpu(2)"><span class="btnIco" data-ico="hard"></span>おにつよ<small>勝てたら自慢していい</small></button>
     <button class="btn ghost" onclick="UI.show('title')">もどる</button>
   </div>
 </div>
@@ -171,19 +176,19 @@ body.fever #board{background:rgba(255,255,255,.12)}
 <div class="screen hidden" id="howto">
   <div class="card">
     <h2>あそびかた</h2>
-    <div class="howRow"><div class="howIcon">👆</div><div><b>スワイプ</b>すると、ぷにが<b>全員その方向へ</b>ころがる!</div></div>
-    <div class="howRow"><div class="howIcon">✨</div><div>同じ色が<b>タテヨコ3つ</b>ならぶと消えて、あいてにダメージ!</div></div>
-    <div class="howRow"><div class="howIcon">🌪</div><div>スワイプした向きに<b>重力</b>もかわる。連鎖もその向きに落ちる!</div></div>
-    <div class="howRow"><div class="howIcon">⚡</div><div>スワイプするたび敵の<b>こうげきゲージ</b>が進む。<b>なにも消えないスワイプは2倍進む!</b>むだ振り禁止!</div></div>
-    <div class="howRow"><div class="howIcon">🌈</div><div>ぷにをたくさん消すと<b>フィーバー</b>!ダメージ2倍タイム!</div></div>
-    <div class="howRow"><div class="howIcon">💥</div><div><b>2か所同時消し</b>はダメージ1.5倍。連鎖とあわせて大爆発!</div></div>
-    <div class="howRow"><div class="howIcon">🪨</div><div>敵の<b>いわ</b>は、となりで消すとわれてボーナス!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="swipe"></div><div><b>スワイプ</b>すると、ぷにが<b>全員その方向へ</b>ころがる!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="match"></div><div>同じ色が<b>タテヨコ3つ</b>ならぶと消えて、あいてにダメージ!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="gravity"></div><div>スワイプした向きに<b>重力</b>もかわる。連鎖もその向きに落ちる!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="gauge"></div><div>スワイプするたび敵の<b>こうげきゲージ</b>が進む。<b>なにも消えないスワイプは2倍進む!</b>むだ振り禁止!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="fever"></div><div>ぷにをたくさん消すと<b>フィーバー</b>!ダメージ2倍タイム!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="double"></div><div><b>2か所同時消し</b>はダメージ1.5倍。連鎖とあわせて大爆発!</div></div>
+    <div class="howRow"><div class="howIcon" data-ico="rock"></div><div>敵の<b>いわ</b>は、となりで消すとわれてボーナス!</div></div>
   </div>
   <div class="menu"><button class="btn primary" onclick="UI.show('title')">わかった!</button></div>
 </div>
 
 <div class="screen hidden" id="ranking">
-  <h2 class="pop" style="font-size:24px;margin-bottom:12px">🏆 タイムアタック全国ランキング</h2>
+  <h2 class="pop" style="font-size:24px;margin-bottom:12px"><span class="btnIco" data-ico="trophy"></span>タイムアタック全国ランキング</h2>
   <div class="card"><div id="rankList">よみこみちゅう…</div>
   <div class="rankNote">※ニックネームは全国に公開されます。本名は使わないでね!</div></div>
   <div class="menu"><button class="btn ghost" onclick="UI.show('title')">もどる</button></div>
@@ -204,13 +209,14 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <div class="gauge" id="feverGauge"><div class="gLabel"><span>フィーバー</span><span id="feverPct"></span></div><div class="gOuter"><div class="gInner" style="width:0%"></div></div></div>
   </div>
   <div class="midInfo">
+    <button class="iconBtn" onclick="Game.quit()" id="homeBtn">← もどる</button>
     <span id="turnLabel"></span><span id="chainLabel"></span>
     <span><button class="iconBtn" onclick="Sfx.toggleBgm()" id="bgmBtn">🎵</button><button class="iconBtn" onclick="Sfx.toggle()" id="muteBtn">🔊</button></span>
   </div>
   <div id="boardWrap">
     <canvas id="board"></canvas>
     <canvas id="fx"></canvas>
-    <div id="guide" style="display:none"><div class="arrow">👆</div><div>スワイプで ぜんいん ころがる!</div></div>
+    <div id="guide" style="display:none"><div class="arrow" id="guideArrow">👆</div><div id="guideText">スワイプで ぜんいん ころがる!</div></div>
   </div>
   <div class="meBar">
     <svg class="face" id="meFace" viewBox="0 0 60 60"></svg>
@@ -228,13 +234,13 @@ body.fever #board{background:rgba(255,255,255,.12)}
   <div class="stats" id="resultStats"></div>
   <div class="menu">
     <button class="btn primary" onclick="Game.retry()">もういっかい</button>
-    <button class="btn" onclick="Game.shareX()">Xでじまんする 🐦</button>
+    <button class="btn" onclick="Game.shareX()">Xでじまんする</button>
     <button class="btn ghost" onclick="UI.show('title')">タイトルへ</button>
   </div>
 </div>
 
 <div id="cutin"><span id="cutinText"></span></div>
-<div class="credit">© カイディンディン ・ v2.3</div>
+<div class="credit">© カイディンディン ・ v2.4</div>
 <script>
 "use strict";
 /* =========================================================
@@ -617,6 +623,81 @@ const R={
   }
 };
 
+// 絵文字の代わりに使うかわいいイラストアイコンを生成
+function iconURL(kind){
+  const S=96, cv=document.createElement('canvas'); cv.width=cv.height=S;
+  const c=cv.getContext('2d'), cx=S/2, cy=S/2, r=S*0.38;
+  const stroke=(col,w)=>{ c.lineWidth=w; c.strokeStyle=col; c.lineJoin='round'; c.lineCap='round'; c.stroke(); };
+  switch(kind){
+    case 'weak': drawPuni(c,cx,cy+4,r,3,{happy:true}); break;          // 緑ぷに にっこり
+    case 'normal': drawPuni(c,cx,cy+4,r,1,{}); break;                  // 青ぷに
+    case 'hard': {                                                     // 赤ぷに+つの(おに)
+      drawPuni(c,cx,cy+6,r,0,{});
+      c.fillStyle='#ffe0a0';
+      [[-1],[1]].forEach(([s])=>{ c.beginPath(); c.moveTo(cx+s*r*0.55,cy-r*0.55); c.lineTo(cx+s*r*0.35,cy-r*1.15); c.lineTo(cx+s*r*0.12,cy-r*0.6); c.closePath(); c.fill(); c.lineWidth=3; c.strokeStyle='#d49030'; c.stroke(); });
+      break;
+    }
+    case 'timer': {                                                    // 時計
+      c.beginPath(); c.arc(cx,cy+3,r,0,7); c.fillStyle='#fff6e8'; c.fill(); stroke('#d4a017',6);
+      c.beginPath(); c.moveTo(cx,cy+3); c.lineTo(cx,cy-r*0.5); stroke('#3a2b52',5);
+      c.beginPath(); c.moveTo(cx,cy+3); c.lineTo(cx+r*0.45,cy+3); stroke('#3a2b52',5);
+      c.beginPath(); c.moveTo(cx-r*0.35,cy-r*0.9); c.lineTo(cx-r*0.7,cy-r*1.2); stroke('#d4a017',6);
+      c.beginPath(); c.moveTo(cx+r*0.35,cy-r*0.9); c.lineTo(cx+r*0.7,cy-r*1.2); stroke('#d4a017',6);
+      break;
+    }
+    case 'swipe': {                                                    // 指+動きの線
+      c.beginPath(); c.moveTo(cx-r*0.9,cy); c.lineTo(cx+r*0.3,cy); stroke('rgba(255,255,255,.5)',5);
+      c.beginPath(); c.moveTo(cx+r*0.1,cy-r*0.3); c.lineTo(cx+r*0.4,cy); c.lineTo(cx+r*0.1,cy+r*0.3); stroke('rgba(255,255,255,.5)',5);
+      // 指
+      c.fillStyle='#ffd6a8'; c.beginPath(); c.roundRect(cx-r*0.28,cy-r*0.15,r*0.4,r*0.95,r*0.2); c.fill(); c.lineWidth=3; c.strokeStyle='#e0a878'; c.stroke();
+      c.beginPath(); c.arc(cx-r*0.08,cy-r*0.15,r*0.22,0,7); c.fillStyle='#ffd6a8'; c.fill(); c.stroke();
+      break;
+    }
+    case 'match': {                                                    // キラキラ星
+      const star=(x,y,rr)=>{ c.beginPath(); for(let i=0;i<8;i++){ const a=i*Math.PI/4, rad=i%2?rr*0.4:rr; c[i?'lineTo':'moveTo'](x+Math.cos(a-Math.PI/2)*rad,y+Math.sin(a-Math.PI/2)*rad);} c.closePath(); c.fillStyle='#ffd644'; c.fill(); };
+      star(cx,cy,r*0.9); star(cx+r*0.7,cy-r*0.7,r*0.35); star(cx-r*0.7,cy+r*0.4,r*0.28);
+      break;
+    }
+    case 'gravity': {                                                  // 渦(重力)矢印
+      c.beginPath(); c.arc(cx,cy,r*0.8,Math.PI*0.4,Math.PI*2); stroke('#54c8f2',7);
+      c.beginPath(); c.moveTo(cx+r*0.8,cy+r*0.15); c.lineTo(cx+r*0.55,cy+r*0.35); c.lineTo(cx+r*0.95,cy+r*0.5); stroke('#54c8f2',7);
+      c.beginPath(); c.arc(cx,cy,r*0.28,0,7); c.fillStyle='#b98bf0'; c.fill();
+      break;
+    }
+    case 'gauge': {                                                    // 稲妻
+      c.beginPath(); c.moveTo(cx+r*0.3,cy-r); c.lineTo(cx-r*0.4,cy+r*0.1); c.lineTo(cx+r*0.05,cy+r*0.1); c.lineTo(cx-r*0.3,cy+r); c.lineTo(cx+r*0.5,cy-r*0.2); c.lineTo(cx+r*0.05,cy-r*0.2); c.closePath();
+      c.fillStyle='#ffd644'; c.fill(); c.lineWidth=3; c.strokeStyle='#d4a017'; c.stroke();
+      break;
+    }
+    case 'fever': {                                                    // 虹
+      ['#ff6b8a','#ffd644','#6fdd85','#54c8f2'].forEach((col,i)=>{ c.beginPath(); c.arc(cx,cy+r*0.7,r*(0.85-i*0.16),Math.PI,0); stroke(col,6); });
+      break;
+    }
+    case 'double': {                                                   // 爆発
+      c.beginPath(); for(let i=0;i<14;i++){ const a=i*Math.PI/7, rad=i%2?r*0.45:r; c[i?'lineTo':'moveTo'](cx+Math.cos(a)*rad,cy+Math.sin(a)*rad);} c.closePath();
+      c.fillStyle='#ff6b3d'; c.fill(); c.lineWidth=3; c.strokeStyle='#d43f0f'; c.stroke();
+      c.fillStyle='#fff'; c.font=`bold ${r*0.7}px sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText('!',cx,cy);
+      break;
+    }
+    case 'rock': drawRock(c,cx,cy+4,r,false); break;                   // いわ
+    case 'trophy': {                                                   // トロフィー
+      c.fillStyle='#ffd644'; c.beginPath(); c.moveTo(cx-r*0.5,cy-r*0.7); c.lineTo(cx+r*0.5,cy-r*0.7); c.lineTo(cx+r*0.4,cy); c.quadraticCurveTo(cx,cy+r*0.35,cx-r*0.4,cy); c.closePath(); c.fill(); c.lineWidth=3; c.strokeStyle='#d4a017'; c.stroke();
+      c.beginPath(); c.arc(cx-r*0.55,cy-r*0.45,r*0.22,0,7); c.arc(cx+r*0.55,cy-r*0.45,r*0.22,0,7); stroke('#d4a017',6);
+      c.fillStyle='#d4a017'; c.fillRect(cx-r*0.12,cy+r*0.2,r*0.24,r*0.35); c.fillRect(cx-r*0.4,cy+r*0.5,r*0.8,r*0.2);
+      break;
+    }
+  }
+  return cv.toDataURL();
+}
+// data-ico属性を持つ要素にイラストを流し込む
+function applyIcons(){
+  document.querySelectorAll('[data-ico]').forEach(el=>{
+    if(el.dataset.done) return; el.dataset.done='1';
+    const img=new Image(); img.src=iconURL(el.dataset.ico); img.alt=''; img.className='icoImg';
+    el.prepend(img);
+  });
+}
+
 function setFace(svgId,kind){
   const cv=document.createElement('canvas'); cv.width=cv.height=120;
   const c=cv.getContext('2d');
@@ -734,11 +815,16 @@ const Game={
     this.updateHp(); this.updateGauges();
     document.getElementById('chainLabel').style.opacity=0;
     document.getElementById('atkGauge').style.display=this.mode==='vs'?'none':'block';
-    document.getElementById('guide').style.display=this.firstPlay?'flex':'none';
-    document.getElementById('guide').style.opacity=1;
+    this.hintActive=false; this.lastClear=performance.now();
+    const guide=document.getElementById('guide');
+    guide.className=''; // hintクラス等をリセット
+    document.getElementById('guideArrow').textContent='👆';
+    document.getElementById('guideText').textContent='スワイプで ぜんいん ころがる!';
+    guide.style.display=this.firstPlay?'flex':'none';
+    guide.style.opacity=1;
     this.updateTurnLabel();
     UI.show('game');
-    this.countdown(()=>{ this.busy=false; Sfx.startBgm(); });
+    this.countdown(()=>{ this.busy=false; Sfx.startBgm(); this.lastClear=performance.now(); this.hideGuide(); });
     cancelAnimationFrame(this.raf); this.last=performance.now();
     const loop=now=>{
       try{
@@ -768,6 +854,48 @@ const Game={
     });
   },
 
+  // タイトルへ戻る
+  quit(){
+    this.over=true; this.busy=true;
+    cancelAnimationFrame(this.raf); this.raf=0;
+    Sfx.stopBgm(); this.setFever(false,true);
+    this.hideGuide();
+    UI.show('title');
+  },
+
+  hideGuide(){
+    const g=document.getElementById('guide');
+    g.style.opacity=0;
+    setTimeout(()=>{ if(g.style.opacity==='0'){ g.style.display='none'; g.className=''; } },400);
+    this.hintActive=false;
+  },
+
+  // 1手で1個でも消せる方向を探す(見つからなければnull)。盤面は元に戻す
+  findHintMove(){
+    const snap=Board.cells.filter(c=>!c.dead).map(c=>({c,gx:c.gx,gy:c.gy}));
+    const restore=()=>snap.forEach(s=>{ s.c.gx=s.gx; s.c.gy=s.gy; });
+    for(const d of ['L','R','U','D']){
+      Board.slide(d);
+      const hit=Board.findMatches().length>0;
+      restore();
+      if(hit) return d;
+    }
+    return null;
+  },
+
+  // 行き詰まりヒント表示(よわよわ限定)
+  showHint(dir){
+    const g=document.getElementById('guide');
+    const arrow={L:'👈',R:'👉',U:'👆',D:'👇'}[dir];
+    const word={L:'ひだり',R:'みぎ',U:'うえ',D:'した'}[dir];
+    g.className='hint dir-'+dir;
+    document.getElementById('guideArrow').textContent=arrow;
+    document.getElementById('guideText').textContent=`${word}にスワイプ! ぷにが そろって消えるよ`;
+    g.style.display='flex'; g.style.opacity=1;
+    this.hintActive=true;
+    Sfx.count();
+  },
+
   cutin(text){
     const el=document.getElementById('cutinText');
     el.textContent=text; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
@@ -791,7 +919,7 @@ const Game={
     this.fever=on; Sfx.fever=on;
     document.body.classList.toggle('fever',on);
     if(!silent){
-      if(on){ Sfx.feverIn(); this.cutin('🌈フィーバー!!'); this.feverEnd=performance.now()+8000; }
+      if(on){ Sfx.feverIn(); this.cutin('フィーバー!!'); this.feverEnd=performance.now()+8000; }
       else Sfx.feverOut();
     }
     this.updateGauges();
@@ -803,6 +931,13 @@ const Game={
     this.atkGauge+=this.atkCfg.idle*dt;
     if(this.atkGauge>=100) this.foeAttack();
     this.updateGauges();
+    // 行き詰まりヒント:よわよわ限定、10秒消せなかったら消せる方向を教える
+    if(this.level===0 && this.mode==='cpu' && !this.hintActive && !this.firstPlay){
+      if(performance.now()-this.lastClear > 10000){
+        const dir=this.findHintMove();
+        if(dir) this.showHint(dir);
+      }
+    }
   },
 
   foeAttack(){
@@ -837,7 +972,8 @@ const Game={
     Sfx.init();
     this.busy=true; this.busyAt=performance.now(); this._chaining=true;
     try{
-      if(this.firstPlay){ this.firstPlay=false; const g=document.getElementById('guide'); g.style.opacity=0; setTimeout(()=>g.style.display='none',400); }
+      if(this.firstPlay){ this.firstPlay=false; }
+      this.hideGuide();
       const moved=Board.slide(dir);
       if(!moved){ Sfx.stuck(); return; }
       Sfx.swipe();
@@ -872,6 +1008,7 @@ const Game={
         await wait(170);
       }
       if(totalDmg>0) this.dealDamage(totalDmg,chain);
+      if(totalPops>0) this.lastClear=performance.now(); // 消せたのでヒントタイマーをリセット
       this.stats.maxChain=Math.max(this.stats.maxChain,chain);
       this.stats.pops+=totalPops; this.stats.rocks+=totalRocks;
 
@@ -1042,6 +1179,7 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
     }
   };
   render();
+  applyIcons(); // 絵文字をイラストアイコンに置換
   if(hasGold) document.getElementById('goldHint').textContent='✦金ぷにと なかよし✦';
   wrap.addEventListener('pointerdown',()=>{
     taps++;
