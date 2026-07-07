@@ -234,7 +234,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
 </div>
 
 <div id="cutin"><span id="cutinText"></span></div>
-<div class="credit">© カイディンディン ・ v2.1</div>
+<div class="credit">© カイディンディン ・ v2.2</div>
 <script>
 "use strict";
 /* =========================================================
@@ -824,9 +824,14 @@ const Game={
 
   /* --- スワイプ処理 --- */
   async swipe(dir){
-    if(this.busy||this.over) return;
+    if(this.over) return;
+    if(this.busy){
+      // 1.5秒以上busyが続くのは異常(固着)。強制解除して処理を続行=自動復旧
+      if(performance.now()-(this.busyAt||0) < 1500) return;
+      this.busy=false;
+    }
     Sfx.init();
-    this.busy=true; this._chaining=true;
+    this.busy=true; this.busyAt=performance.now(); this._chaining=true;
     try{
       if(this.firstPlay){ this.firstPlay=false; const g=document.getElementById('guide'); g.style.opacity=0; setTimeout(()=>g.style.display='none',400); }
       const moved=Board.slide(dir);
@@ -997,26 +1002,24 @@ function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function shake(){ const el=document.getElementById('shakeRoot'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
 function flashHurt(id){ const el=document.getElementById(id); el.classList.remove('hurt'); void el.offsetWidth; el.classList.add('hurt'); }
 
-/* ---------- 入力 ---------- */
+/* ---------- 入力(ポインターイベントに一本化:touch/mouse二重発火を根絶) ---------- */
 (()=>{
   let sx=0,sy=0,active=false;
-  const down=e=>{ const p=pt(e); sx=p.x; sy=p.y; active=true; };
-  const up=e=>{
+  const inGame=()=>!document.getElementById('game').classList.contains('hidden');
+  const onDown=e=>{ sx=e.clientX; sy=e.clientY; active=true; };
+  const onUp=e=>{
     if(!active) return; active=false;
-    const p=pt(e.changedTouches?e.changedTouches[0]:e);
-    const dx=p.x-sx,dy=p.y-sy;
+    const dx=e.clientX-sx, dy=e.clientY-sy;
     if(Math.abs(dx)<24&&Math.abs(dy)<24) return;
     const dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'R':'L'):(dy>0?'D':'U');
-    if(!document.getElementById('game').classList.contains('hidden')) Game.swipe(dir);
+    if(inGame()) Game.swipe(dir);
   };
-  const pt=e=>({x:(e.touches?e.touches[0]:e).clientX,y:(e.touches?e.touches[0]:e).clientY});
-  window.addEventListener('touchstart',down,{passive:true});
-  window.addEventListener('touchend',up,{passive:true});
-  window.addEventListener('mousedown',down);
-  window.addEventListener('mouseup',up);
+  window.addEventListener('pointerdown',onDown);
+  window.addEventListener('pointerup',onUp);
+  window.addEventListener('pointercancel',()=>{ active=false; });
   window.addEventListener('keydown',e=>{
     const m={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D'};
-    if(m[e.key]&&!document.getElementById('game').classList.contains('hidden')){ e.preventDefault(); Game.swipe(m[e.key]); }
+    if(m[e.key]&&inGame()){ e.preventDefault(); Game.swipe(m[e.key]); }
   });
 })();
 
