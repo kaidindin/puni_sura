@@ -234,7 +234,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
 </div>
 
 <div id="cutin"><span id="cutinText"></span></div>
-<div class="credit">© カイディンディン</div>
+<div class="credit">© カイディンディン ・ v2.1</div>
 <script>
 "use strict";
 /* =========================================================
@@ -795,7 +795,7 @@ const Game={
 
   /* --- 敵ゲージ:時間でじわり進む(放置対策) --- */
   idleTick(dt){
-    if(this.busy&&!this._chaining) return; // カウントダウン中は止める。連鎖中は進む!
+    if(this.busy) return; // スワイプ/連鎖処理中は一切さわらない(割り込み防止)
     this.atkGauge+=this.atkCfg.idle*dt;
     if(this.atkGauge>=100) this.foeAttack();
     this.updateGauges();

@@ -1,14 +1,20 @@
-const CACHE='punisura-v1';
+// キャッシュ名を上げると、古いキャッシュを自動で破棄して新版を配信する
+const CACHE='punisura-v2-1';
 self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./','./index.html'])));
-  self.skipWaiting();
+  self.skipWaiting(); // 新SWを即座に有効化
 });
 self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  e.waitUntil(
+    caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
+      .then(()=>self.clients.claim())
+  );
 });
 self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
-  e.respondWith(fetch(e.request).then(r=>{
-    const cl=r.clone(); caches.open(CACHE).then(c=>c.put(e.request,cl)); return r;
-  }).catch(()=>caches.match(e.request)));
+  // ネット優先。取れたら最新をキャッシュ更新。オフライン時だけキャッシュ。
+  e.respondWith(
+    fetch(e.request).then(r=>{
+      const cl=r.clone(); caches.open(CACHE).then(c=>c.put(e.request,cl)); return r;
+    }).catch(()=>caches.match(e.request))
+  );
 });
