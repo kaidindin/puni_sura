@@ -234,7 +234,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
 </div>
 
 <div id="cutin"><span id="cutinText"></span></div>
-<div class="credit">© カイディンディン ・ v2.2</div>
+<div class="credit">© カイディンディン ・ v2.3</div>
 <script>
 "use strict";
 /* =========================================================
@@ -741,13 +741,17 @@ const Game={
     this.countdown(()=>{ this.busy=false; Sfx.startBgm(); });
     cancelAnimationFrame(this.raf); this.last=performance.now();
     const loop=now=>{
-      const dt=Math.min(.05,(now-this.last)/1000); this.last=now;
-      R.draw(dt);
-      if(!this.over){
-        if(this.mode!=='vs'&&!this._counting) this.idleTick(dt);
-        if(this.fever&&performance.now()>this.feverEnd) this.setFever(false);
+      try{
+        const dt=Math.min(.05,(now-this.last)/1000); this.last=now;
+        R.draw(dt);
+        if(!this.over){
+          if(this.mode!=='vs'&&!this._counting) this.idleTick(dt);
+          if(this.fever&&performance.now()>this.feverEnd) this.setFever(false);
+        }
+      }catch(err){
+        console.error('loop error(描画は継続):',err); // 何が起きても下で必ず次フレームを予約
       }
-      this.raf=requestAnimationFrame(loop);
+      this.raf=requestAnimationFrame(loop); // ← ここに必ず到達させる=描画が止まらない
     };
     this.raf=requestAnimationFrame(loop);
   },
