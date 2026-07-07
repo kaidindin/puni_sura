@@ -108,6 +108,14 @@ body.fever #board{background:rgba(255,255,255,.12)}
 #guide{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:rgba(20,12,40,.55);border-radius:20px;font-size:15px;font-weight:800;gap:8px;pointer-events:none;transition:opacity .4s;text-align:center;padding:0 20px}
 #guide.hint{background:rgba(20,12,40,.28)}
+#tutMsg{position:absolute;left:50%;top:-6px;transform:translateX(-50%);z-index:6;width:min(400px,92vw);
+  background:linear-gradient(180deg,#fff,#fff0d4);color:#3a2b52;border-radius:16px;padding:12px 16px;
+  font-size:14px;font-weight:800;line-height:1.55;text-align:center;box-shadow:0 6px 16px rgba(0,0,0,.4);
+  animation:tutPop .4s cubic-bezier(.2,1.6,.4,1)}
+#tutMsg b{color:#e0553d}
+#tutMsg .tutNext{margin-top:10px;display:inline-block;background:linear-gradient(180deg,#ffe066,#ffd644);
+  padding:8px 22px;border-radius:99px;font-size:14px;box-shadow:0 3px 0 #d4a017}
+@keyframes tutPop{0%{transform:translateX(-50%) scale(.6);opacity:0}100%{transform:translateX(-50%) scale(1);opacity:1}}
 #guide .arrow{font-size:44px;animation:guideMove 1.5s ease-in-out infinite}
 #guide.dir-U .arrow,#guide.dir-D .arrow{animation:guideMoveV 1.3s ease-in-out infinite}
 @keyframes guideMove{0%,100%{transform:translateX(-30px)}50%{transform:translateX(30px)}}
@@ -144,6 +152,12 @@ body.fever #board{background:rgba(255,255,255,.12)}
 #shakeRoot.shake{animation:shakeAnim .3s}
 @keyframes shakeAnim{0%,100%{transform:translate(0,0)}25%{transform:translate(-6px,4px)}50%{transform:translate(5px,-5px)}75%{transform:translate(-4px,3px)}}
 .credit{position:fixed;bottom:calc(6px + env(safe-area-inset-bottom));font-size:10px;opacity:.5;z-index:11}
+#confirmQuit{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(15,10,30,.72);padding:20px}
+.confirmBox{background:linear-gradient(180deg,#31254f,#241b3d);border:2px solid rgba(255,255,255,.15);border-radius:24px;padding:26px 24px;width:min(320px,86vw);text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:bounceIn .35s cubic-bezier(.2,1.7,.4,1)}
+.confirmMsg{font-family:'Mochiy Pop One';font-size:20px;line-height:1.5;margin-bottom:20px}
+.confirmMsg span{font-family:'M PLUS Rounded 1c';font-size:12px;font-weight:500;opacity:.7}
+.confirmBtns{display:flex;gap:12px}
+.confirmBtns .btn{flex:1;padding:13px 10px;font-size:15px}
 @media (prefers-reduced-motion: reduce){ *{animation-duration:.01s !important} }
 </style>
 </head>
@@ -156,7 +170,8 @@ body.fever #board{background:rgba(255,255,255,.12)}
   <div id="goldHint"></div>
   <div class="menu">
     <button class="btn primary pop" onclick="Game.selectCpu()">ひとりで対戦<small>CPUとバトル</small></button>
-    <button class="btn" onclick="Game.startTA()"><span class="btnIco" data-ico="timer"></span>タイムアタック<small>タイムのおにを倒せ!全国ランキング</small><span class="badge">全国!</span></button>
+    <button class="btn" onclick="Game.startTutorial()">はじめての人へ<small>あそびかたを 1から おしえるよ</small><span class="badge">入門</span></button>
+    <button class="btn" onclick="Game.startTA()"><span class="btnIco" data-ico="timer"></span>タイムアタック<small>タイムのおにを倒せ!全国ランキング</small></button>
     <button class="btn" onclick="Game.startVs()">ふたりで対戦<small>1台のスマホで交代バトル</small></button>
     <button class="btn ghost" onclick="Game.showRanking()">ランキング</button>
     <button class="btn ghost" onclick="UI.show('howto')">あそびかた</button>
@@ -217,6 +232,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <canvas id="board"></canvas>
     <canvas id="fx"></canvas>
     <div id="guide" style="display:none"><div class="arrow" id="guideArrow">👆</div><div id="guideText">スワイプで ぜんいん ころがる!</div></div>
+    <div id="tutMsg" style="display:none"></div>
   </div>
   <div class="meBar">
     <svg class="face" id="meFace" viewBox="0 0 60 60"></svg>
@@ -240,7 +256,17 @@ body.fever #board{background:rgba(255,255,255,.12)}
 </div>
 
 <div id="cutin"><span id="cutinText"></span></div>
-<div class="credit">© カイディンディン ・ v2.4</div>
+
+<div id="confirmQuit" style="display:none">
+  <div class="confirmBox">
+    <div class="confirmMsg">タイトルに もどる?<br><span>いまのバトルは おわっちゃうよ</span></div>
+    <div class="confirmBtns">
+      <button class="btn ghost" onclick="Game.cancelQuit()">つづける</button>
+      <button class="btn primary" onclick="Game.doQuit()">もどる</button>
+    </div>
+  </div>
+</div>
+<div class="credit">© カイディンディン ・ v2.5</div>
 <script>
 "use strict";
 /* =========================================================
@@ -326,8 +352,10 @@ const Sfx = {
   // ダブル消し「キュピーン」
   double(){ this.tone(880,.22,'sine',.13,880); this.tone(1320,.18,'sine',.09,660,.06); },
   rock(){ this.noise(.14,.2,0,300); this.tone(110,.13,'square',.11,-50); this.tone(700,.06,'sine',.05,300,.1); },
-  attack(){ this.tone(220,.22,'sawtooth',.11,650); this.noise(.16,.07,.05,2000); },
-  damage(){ this.tone(150,.28,'square',.16,-90); this.noise(.22,.18,0,200); },
+  // ぷにが「ぴゅん」と飛ぶ音(ノイズなし)
+  attack(){ this.tone(420,.13,'sine',.11,520); this.tone(640,.1,'triangle',.06,360,.05); },
+  // やわらかく「ぽむっ」とぶつかる音(ノイズなし)
+  damage(){ this.tone(340,.14,'sine',.13,-130); this.tone(220,.16,'triangle',.09,-50,.05); this.tone(460,.1,'sine',.05,180,.1); },
   stuck(){ this.tone(140,.1,'square',.09,-40); this.tone(120,.1,'square',.09,-40,.12); },
   count(){ this.tone(660,.12,'square',.11); },
   go(){ this.tone(660,.09,'square',.13); this.tone(880,.28,'square',.13,0,.09); },
@@ -549,7 +577,13 @@ const Board={
       const colors=live.map(c=>c.color);
       for(let i=colors.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [colors[i],colors[j]]=[colors[j],colors[i]]; }
       live.forEach((c,i)=>c.color=colors[i]);
-      if(!this.findMatches().length) break;
+      if(!this.findMatches().length) return;
+    }
+    // シャッフルで解消できない場合(色が偏りすぎ):色を散らして強制解消
+    live.forEach((c,i)=>c.color=i%5);
+    let guard=0;
+    while(this.findMatches().length && guard++<80){
+      const m=this.findMatches(); m[0].color=(m[0].color+1)%5;
     }
   }
 };
@@ -808,6 +842,8 @@ const Game={
 
   begin(){
     Board.reset(); R.init();
+    document.getElementById('foeHp').style.visibility='visible';
+    document.querySelector('.gaugeRow').style.display='flex';
     this.meHp=this.meMax=100; this.foeHp=this.foeMax;
     this.over=false; this.busy=true;
     this.atkGauge=0; this.feverGauge=0; this.setFever(false,true);
@@ -854,8 +890,16 @@ const Game={
     });
   },
 
-  // タイトルへ戻る
+  // もどるボタン:まず確認を出す
   quit(){
+    document.getElementById('confirmQuit').style.display='flex';
+  },
+  cancelQuit(){
+    document.getElementById('confirmQuit').style.display='none';
+  },
+  // 実際にタイトルへ戻る
+  doQuit(){
+    document.getElementById('confirmQuit').style.display='none';
     this.over=true; this.busy=true;
     cancelAnimationFrame(this.raf); this.raf=0;
     Sfx.stopBgm(); this.setFever(false,true);
@@ -896,6 +940,108 @@ const Game={
     Sfx.count();
   },
 
+  // ===== ステップbyステップ講座 =====
+  TUT_STEPS:[
+    { msg:'ようこそ!<br><b>ゆびで よこに スワイプ</b>してみよう。ぷにが ぜんいん うごくよ!', dir:'R',
+      board:[[0,2,1],[2,2,1],[4,2,1], [1,0,3],[3,0,4]] },
+    { msg:'すごい!<br>同じ色が <b>タテヨコに3つ</b> ならぶと 消えるんだ✨', dir:'D',
+      board:[[3,0,0],[3,2,0],[3,4,0], [0,0,2],[1,0,4]] },
+    { msg:'その調子!<br><b>2か所いっぺんに消す</b>と ダメージ2倍!<br>よこに スワイプしてみて', dir:'R',
+      board:[[0,1,1],[2,1,1],[4,1,1], [0,4,2],[2,4,2],[4,4,2]] },
+    { msg:'かんぺき!<br>あとは <b>じゆうに スワイプ</b>して たくさん消してみよう!<br>3回 消したら 卒業だよ🎓', dir:null, free:3,
+      board:null },
+  ],
+
+  startTutorial(){
+    this.mode='tutorial'; this.tutStep=0; this.tutFreeCount=0;
+    this.foeMax=this.foeHp=9999; this.meMax=this.meHp=100; // 減らない
+    document.getElementById('foeName').textContent='せんせいぷに';
+    document.getElementById('meName').textContent='きみ';
+    setFace('meFace', Store.get('gold',false)?'gold':'me');
+    setFace('foeFace','me2');
+    // 敵HP/ゲージは講座では邪魔なので隠す
+    document.getElementById('foeHp').style.visibility='hidden';
+    document.querySelector('.gaugeRow').style.display='none';
+    this.beginTutorial();
+  },
+
+  beginTutorial(){
+    R.init(); this.over=false; this.busy=false;
+    this.atkGauge=0; this.feverGauge=0; this.setFever(false,true);
+    this.stats={maxChain:0,pops:0,rocks:0,dmg:0,doubles:0,gold:false,taTime:0,time:performance.now()};
+    this.firstPlay=false;
+    document.getElementById('guide').style.display='none';
+    document.getElementById('chainLabel').style.opacity=0;
+    document.getElementById('turnLabel').textContent='';
+    UI.show('game');
+    this.loadTutStep(0);
+    cancelAnimationFrame(this.raf); this.last=performance.now();
+    const loop=now=>{
+      try{
+        const dt=Math.min(.05,(now-this.last)/1000); this.last=now;
+        R.draw(dt);
+      }catch(err){ console.error('tut loop:',err); }
+      this.raf=requestAnimationFrame(loop);
+    };
+    this.raf=requestAnimationFrame(loop);
+  },
+
+  loadTutStep(n){
+    const step=this.TUT_STEPS[n];
+    // 盤面セット
+    if(step.board){
+      Board.cells=step.board.map(([x,y,c])=>Board.mk(x,y,c));
+    } else {
+      Board.reset(); // 自由練習は通常盤面
+    }
+    // メッセージ
+    const el=document.getElementById('tutMsg');
+    el.style.display='block';
+    el.innerHTML=step.msg + (step.dir?`<div class="tutNext">${({L:'⬅ ひだり',R:'みぎ ➡',U:'⬆ うえ',D:'した ⬇'})[step.dir]} に スワイプ!</div>`:'<div class="tutNext">じゆうに スワイプ!</div>');
+    // 方向ガイド矢印
+    if(step.dir){
+      const g=document.getElementById('guide');
+      g.className='hint dir-'+step.dir;
+      document.getElementById('guideArrow').textContent={L:'👈',R:'👉',U:'👆',D:'👇'}[step.dir];
+      document.getElementById('guideText').textContent='';
+      g.style.display='flex'; g.style.opacity='1';
+    } else {
+      document.getElementById('guide').style.display='none';
+    }
+  },
+
+  // チュートリアルのスワイプ後処理(swipeから呼ぶ)。消せたら次へ
+  tutAfterSwipe(popped){
+    const step=this.TUT_STEPS[this.tutStep];
+    if(popped<=0) return; // 消せなかったら同じステップのまま
+    Sfx.chainVoice(2);
+    if(step.free){
+      this.tutFreeCount++;
+      if(this.tutFreeCount>=step.free){ this.finishTutorial(); return; }
+      document.getElementById('tutMsg').innerHTML=`いいね!あと <b>${step.free-this.tutFreeCount}</b>回 消そう!`;
+      return;
+    }
+    this.tutStep++;
+    if(this.tutStep>=this.TUT_STEPS.length){ this.finishTutorial(); return; }
+    setTimeout(()=>this.loadTutStep(this.tutStep), 600);
+  },
+
+  finishTutorial(){
+    document.getElementById('guide').style.display='none';
+    document.getElementById('tutMsg').style.display='none';
+    // 表示を元に戻す
+    document.getElementById('foeHp').style.visibility='visible';
+    document.querySelector('.gaugeRow').style.display='flex';
+    this.over=true; cancelAnimationFrame(this.raf);
+    Sfx.win();
+    const big=document.getElementById('resultText');
+    big.textContent='そつぎょう!'; big.className='big pop win';
+    document.getElementById('shougou').textContent='称号:ぷにマスター見習い';
+    document.getElementById('resultStats').innerHTML='あそびかたは バッチリ!<br>つぎは <b>CPUと たいせん</b> してみよう!';
+    this._share={winText:'チュートリアル卒業!',isWin:true,title:'ぷにマスター見習い',sec:0};
+    UI.show('result');
+  },
+
   cutin(text){
     const el=document.getElementById('cutinText');
     el.textContent=text; el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
@@ -927,6 +1073,7 @@ const Game={
 
   /* --- 敵ゲージ:時間でじわり進む(放置対策) --- */
   idleTick(dt){
+    if(this.mode==='tutorial') return; // チュートリアルは敵攻撃・ヒントなし
     if(this.busy) return; // スワイプ/連鎖処理中は一切さわらない(割り込み防止)
     this.atkGauge+=this.atkCfg.idle*dt;
     if(this.atkGauge>=100) this.foeAttack();
@@ -1013,10 +1160,10 @@ const Game={
       this.stats.pops+=totalPops; this.stats.rocks+=totalRocks;
 
       // フィーバー突入判定
-      if(!this.fever&&this.feverGauge>=100&&this.mode!=='vs'){ this.feverGauge=0; this.setFever(true); }
+      if(!this.fever&&this.feverGauge>=100&&(this.mode==='cpu'||this.mode==='ta')){ this.feverGauge=0; this.setFever(true); }
 
       // 敵ゲージ:スワイプごとに進む。空振りは2倍!
-      if(this.mode!=='vs'&&!this.over){
+      if((this.mode==='cpu'||this.mode==='ta')&&!this.over){
         this.atkGauge+=this.atkCfg.perSwipe*(anyMatch?1:2);
         if(!anyMatch) this.foeSay('むだ振り!チャンス!');
         if(this.atkGauge>=100) this.foeAttack();
@@ -1040,6 +1187,8 @@ const Game={
         if(this.vsSwipes<=0) await this.vsChangeTurn();
         this.updateTurnLabel();
       }
+
+      if(this.mode==='tutorial'){ this.tutAfterSwipe(totalPops); }
     }catch(err){
       console.error('swipe error:',err); // 何が起きても下のfinallyでロック解除
     }finally{
@@ -1108,7 +1257,7 @@ const Game={
     }
   },
 
-  retry(){ this.mode==='cpu'?this.startCpu(this.level):this.mode==='ta'?this.startTA():this.startVs(); },
+  retry(){ this.mode==='cpu'?this.startCpu(this.level):this.mode==='ta'?this.startTA():this.mode==='tutorial'?this.startTutorial():this.startVs(); },
 
   shareX(){
     const s=this._share||{};
