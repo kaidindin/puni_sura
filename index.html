@@ -287,7 +287,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v3.1</div>
+<div class="credit">© カイディンディン ・ v3.2</div>
 <script>
 "use strict";
 /* =========================================================
@@ -1236,7 +1236,12 @@ const Game={
       if(this.firstPlay){ this.firstPlay=false; }
       this.hideGuide();
       const moved=Board.slide(dir);
-      if(!moved){ Sfx.stuck(); return; }
+      if(!moved){
+        Sfx.stuck();
+        // 動かしても消せる手が無い=真の手詰まり→即シャッフルボタン
+        if(!this.over && this.mode!=='tutorial' && !Board.canClear()) this.showShuffleBtn();
+        return;
+      }
       Sfx.swipe();
       await wait(150);
 
@@ -1301,6 +1306,11 @@ const Game={
         await wait(240);
         Board.refill(dir,0); Board.slide(dir);
         await wait(150);
+      }
+
+      // 真の手詰まり(動かしても消せる手が無い)なら即シャッフルボタン
+      if(!this.over && this.mode!=='tutorial' && !Board.canClear()){
+        this.showShuffleBtn();
       }
 
       if(this.mode==='vs'&&!this.over){
