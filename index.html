@@ -287,7 +287,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v3.2</div>
+<div class="credit">© カイディンディン ・ v3.3</div>
 <script>
 "use strict";
 /* =========================================================
@@ -808,8 +808,8 @@ function setFace(svgId,kind){
       create policy "insert" on punisura_ranking for insert with check (true);
    2. 下のURLとKEYを書き換える(anonキー)
 ------------------------------------------------------------ */
-const SUPABASE_URL='';   // 例: https://xxxx.supabase.co
-const SUPABASE_KEY='';   // anon public key
+const SUPABASE_URL='https://vdjirxautmudhucirieh.supabase.co';
+const SUPABASE_KEY='sb_publishable_o1zhnZlqFXBR-OuVQ49CkA_JX-Rl5Tw';
 const Rank={
   enabled(){ return SUPABASE_URL&&SUPABASE_KEY; },
   async submit(name,timeSec){
