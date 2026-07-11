@@ -58,7 +58,6 @@ button{font-family:inherit;border:none;cursor:pointer}
 .tPuni:nth-child(4){animation-delay:.45s}.tPuni:nth-child(5){animation-delay:.6s}
 @keyframes hop{0%,100%{transform:translateY(0) scaleY(1)}30%{transform:translateY(-14px) scaleY(1.06)}45%{transform:translateY(0) scaleY(.92)}}
 @keyframes bounceIn{0%{transform:scale(.3)}100%{transform:scale(1)}}
-#goldHint{font-size:10px;opacity:.4;margin-bottom:4px;min-height:14px}
 #a2hs{margin-top:16px;width:min(320px,84vw);background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);
   border-radius:16px;padding:12px 16px;font-size:12px;line-height:1.6;text-align:center;animation:tutPop .5s cubic-bezier(.2,1.6,.4,1)}
 #a2hs b{color:var(--lemon)}
@@ -197,7 +196,6 @@ body.fever #board{background:rgba(255,255,255,.12)}
   <h1>ぷにスラ<br>大戦</h1>
   <div class="sub">スワイプで重力が変わる 新感覚パズルバトル<br><span style="font-size:11px;opacity:.7">お笑い芸人カイディンディン制作</span></div>
   <div id="titlePunis"></div>
-  <div id="goldHint"></div>
   <div class="menu">
     <button class="btn primary pop" onclick="Game.selectCpu()">ひとりで対戦<small>CPUとバトル</small></button>
     <button class="btn" onclick="Game.startTutorial()">はじめての人へ<small>あそびかたを 1から おしえるよ</small><span class="badge">入門</span></button>
@@ -325,7 +323,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v3.8</div>
+<div class="credit">© カイディンディン ・ v4.0</div>
 <script>
 "use strict";
 /* =========================================================
@@ -465,7 +463,7 @@ const Store={
 /* ---------- ぷにキャラ描画 ---------- */
 const COLORS=[
   {body:'#ff6b8a',dark:'#d43f63'},{body:'#54c8f2',dark:'#2b93c4'},{body:'#ffd644',dark:'#d4a017'},
-  {body:'#6fdd85',dark:'#3daa58'},{body:'#b98bf0',dark:'#8a58c9'},{body:'#ffd700',dark:'#b8860b'} // 5=金ぷに
+  {body:'#6fdd85',dark:'#3daa58'},{body:'#b98bf0',dark:'#8a58c9'}  // 5色のみ(金ぷに廃止)
 ];
 const ROCK={body:'#8d8a99',dark:'#5e5b6b'};
 
@@ -477,10 +475,6 @@ function drawPuni(ctx,x,y,r,ci,opt={}){
   ctx.quadraticCurveTo(-r,-r,0,-r); ctx.quadraticCurveTo(r,-r,r,.2*r);
   ctx.quadraticCurveTo(r,r*.95,0,r*.95); ctx.quadraticCurveTo(-r,r*.95,-r,.2*r);
   ctx.fillStyle=c.body; ctx.fill(); ctx.lineWidth=r*.13; ctx.strokeStyle=c.dark; ctx.stroke();
-  if(ci===5){ // 金ぷにはキラキラ
-    ctx.fillStyle='rgba(255,255,255,.85)';
-    ctx.font=`${r*.5}px sans-serif`; ctx.fillText('✦',r*.25,-r*.35);
-  }
   ctx.beginPath(); ctx.ellipse(-r*.4,-r*.5,r*.22,r*.13,-0.5,0,7);
   ctx.fillStyle='rgba(255,255,255,.55)'; ctx.fill();
   const happy=opt.happy,blink=opt.blink;
@@ -599,7 +593,7 @@ const Board={
     rocks.forEach(r=>{ r.dead=true; r.popT=0; });
     return {popped:matches.length,rocks:rocks.size};
   },
-  refill(dir,goldChance=0){
+  refill(dir){
     const [dx,dy]=DIRS[dir];
     const need=Math.max(0,TARGET_FILL-this.count());
     const empt=[];
@@ -607,8 +601,7 @@ const Board={
     empt.sort((a,b)=> dx?(a[0]-b[0])*dx:(a[1]-b[1])*dy);
     for(let i=0;i<Math.min(need,empt.length);i++){
       const [x,y]=empt[i];
-      const gold=Math.random()<goldChance;
-      const c=this.mk(x,y,gold?5:Math.floor(Math.random()*5));
+      const c=this.mk(x,y,Math.floor(Math.random()*5));
       c.appear=0; this.cells.push(c);
     }
   },
@@ -827,7 +820,7 @@ function applyIcons(){
 function setFace(svgId,kind){
   const cv=document.createElement('canvas'); cv.width=cv.height=120;
   const c=cv.getContext('2d');
-  const map={me:[2,1],me2:[1,1],cpu0:[3,0],cpu1:[4,0],gold:[5,1]};
+  const map={me:[2,1],me2:[1,1],cpu0:[3,0],cpu1:[4,0]};
   if(kind==='foe'||kind==='ta') drawRock(c,60,60,46,false);
   else { const [ci,hp]=map[kind]; drawPuni(c,60,64,48,ci,{happy:!!hp}); }
   document.getElementById(svgId).outerHTML=`<img class="face" id="${svgId}" src="${cv.toDataURL()}">`;
@@ -875,7 +868,6 @@ const Rank={
 /* ---------- 称号 ---------- */
 function getShougou(s,mode,isWin){
   if(!isWin) return ['ぷにのたまご','まだまだこれから!'];
-  if(s.gold) return ['✦金ぷに発見者✦','伝説はここから始まる'];
   if(s.maxChain>=6) return ['ぷにの神','重力を完全に支配した'];
   if(s.maxChain>=5) return ['重力マスター','未来が見えている'];
   if(mode==='ta'&&s.taTime<=30) return ['音速スワイパー','はやすぎて残像が見える'];
@@ -1069,7 +1061,7 @@ const Game={
     this.foeMax=100;
     document.getElementById('foeName').textContent=this.atkCfg.name;
     document.getElementById('meName').textContent='きみ';
-    setFace('meFace', Store.get('gold',false)?'gold':'me');
+    setFace('meFace','me');
     setFace('foeFace', level===0?'cpu0':level===1?'cpu1':'foe');
     this.begin();
   },
@@ -1080,7 +1072,7 @@ const Game={
     this.foeMax=150;
     document.getElementById('foeName').textContent=this.atkCfg.name;
     document.getElementById('meName').textContent='きみ';
-    setFace('meFace',Store.get('gold',false)?'gold':'me'); setFace('foeFace','ta');
+    setFace('meFace','me'); setFace('foeFace','ta');
     this.begin();
   },
 
@@ -1104,7 +1096,7 @@ const Game={
     this.meHp=this.meMax=100; this.foeHp=this.foeMax;
     this.over=false; this.busy=true;
     this.atkGauge=0; this.feverGauge=0; this.setFever(false,true);
-    this.stats={maxChain:0,pops:0,rocks:0,dmg:0,doubles:0,gold:false,taTime:0,time:performance.now()};
+    this.stats={maxChain:0,pops:0,rocks:0,dmg:0,doubles:0,taTime:0,time:performance.now()};
     this.updateHp(); this.updateGauges();
     document.getElementById('chainLabel').style.opacity=0;
     document.getElementById('atkGauge').style.display=this.mode==='vs'?'none':'block';
@@ -1215,7 +1207,7 @@ const Game={
     this.foeMax=this.foeHp=9999; this.meMax=this.meHp=100; // 減らない
     document.getElementById('foeName').textContent='せんせいぷに';
     document.getElementById('meName').textContent='きみ';
-    setFace('meFace', Store.get('gold',false)?'gold':'me');
+    setFace('meFace','me');
     setFace('foeFace','me2');
     // 敵HP/ゲージは講座では邪魔なので隠す
     document.getElementById('foeHp').style.visibility='hidden';
@@ -1227,7 +1219,7 @@ const Game={
     R.init(); this.over=false; this.busy=false;
     this.hideShuffleBtn();
     this.atkGauge=0; this.feverGauge=0; this.setFever(false,true);
-    this.stats={maxChain:0,pops:0,rocks:0,dmg:0,doubles:0,gold:false,taTime:0,time:performance.now()};
+    this.stats={maxChain:0,pops:0,rocks:0,dmg:0,doubles:0,taTime:0,time:performance.now()};
     this.firstPlay=false;
     document.getElementById('guide').style.display='none';
     document.getElementById('chainLabel').style.opacity=0;
@@ -1458,7 +1450,6 @@ const Game={
         const groups=Board.groupCount(m);
         const {popped,rocks}=Board.clear(m);
         m.forEach((c,i)=>{
-          if(c.color===5&&!c.rock){ this.stats.gold=true; Sfx.gold(); R.bigText('✦金ぷに!!✦',34); }
           R.burst(c.gx,c.gy,c.color); Sfx.pop(chain,i);
         });
         if(rocks) Sfx.rock();
@@ -1474,7 +1465,7 @@ const Game={
         lbl.textContent=chain>=2?`${chain}連鎖!`:''; lbl.style.opacity=chain>=2?1:0;
         this.updateGauges();
         await wait(300);
-        Board.refill(dir, this.stats.gold?0:0.004); // 金ぷにはごく稀に湧く(1回のみ)
+        Board.refill(dir);
         Board.slide(dir);
         await wait(170);
       }
@@ -1587,7 +1578,6 @@ const Game={
         }
         document.getElementById('resultStats').innerHTML=
           `${desc}<br>さいだい連鎖 <b>${this.stats.maxChain}</b> れんさ ・ けしたぷに <b>${this.stats.pops}</b> ひき<br>ダブル消し <b>${this.stats.doubles}</b> かい ・ わったいわ <b>${this.stats.rocks}</b> こ${extra}`;
-        if(this.stats.gold&&!Store.get('gold',false)){ Store.set('gold',true); Sfx.gold(); }
         this.setResultButtons('battle');
         UI.show('result');
       },700);
@@ -1653,32 +1643,17 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
   });
 })();
 
-/* ---------- タイトルぷに+隠し金ぷに ---------- */
+/* ---------- タイトルぷに ---------- */
 (()=>{
   const wrap=document.getElementById('titlePunis');
-  const hasGold=Store.get('gold',false);
-  let taps=0;
-  const render=()=>{
-    wrap.innerHTML='';
-    for(let i=0;i<5;i++){
-      const cv=document.createElement('canvas'); cv.width=cv.height=110; cv.className='tPuni';
-      const gold=hasGold&&i===2;
-      drawPuni(cv.getContext('2d'),55,58,44,gold?5:i,{happy:i===2});
-      wrap.appendChild(cv);
-    }
-  };
-  render();
-  applyIcons(); // 絵文字をイラストアイコンに置換
-  if(hasGold) document.getElementById('goldHint').textContent='✦金ぷにと なかよし✦';
-  wrap.addEventListener('pointerdown',()=>{
-    taps++;
-    Sfx.init(); Sfx.tone(500+taps*80,.08,'sine',.1,100);
-    if(taps===7&&!Store.get('gold',false)){
-      Store.set('gold',true); Sfx.gold();
-      document.getElementById('goldHint').textContent='✦金ぷにが なかまになった!✦';
-      setTimeout(()=>location.reload(),1200);
-    }
-  });
+  wrap.innerHTML='';
+  for(let i=0;i<5;i++){
+    const cv=document.createElement('canvas'); cv.width=cv.height=110; cv.className='tPuni';
+    drawPuni(cv.getContext('2d'),55,58,44,i,{happy:i===2});
+    wrap.appendChild(cv);
+  }
+  applyIcons();
+  wrap.addEventListener('pointerdown',()=>{ Sfx.init(); Sfx.tone(600,.08,'sine',.1,100); });
 })();
 
 /* ---------- ホーム画面に追加(PWAインストール)案内 ---------- */
