@@ -3,12 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>ぷにスラ大戦|スワイプで重力が変わる新感覚パズル - カイディンディン</title>
-<meta name="description" content="スワイプするだけ、なのに奥が深い!盤面ごと重力が変わる新感覚マッチ3バトル「ぷにスラ大戦」。連鎖・フィーバー・タイムアタックで全国ランキングに挑め!スマホで無料プレイ。カイディンディン制作。">
+<title>ぷにスラ大戦(ぷにスラ)｜カイディンディン制作の無料パズルゲーム</title>
+<meta name="description" content="ぷにスラ大戦(ぷにスラ)は、お笑い芸人カイディンディンが作った無料のブラウザパズルゲーム。スワイプで重力が変わる新感覚マッチ3バトル。連鎖・フィーバー・全国タイムアタックランキングで盛り上がる!スマホで今すぐ無料プレイ。">
+<meta name="keywords" content="ぷにスラ,ぷにスラ大戦,カイディンディン,パズルゲーム,無料,ブラウザゲーム,マッチ3,スマホゲーム,連鎖,ランキング">
+<meta name="author" content="カイディンディン">
+<meta name="apple-mobile-web-app-title" content="ぷにスラ大戦">
 <link rel="canonical" href="https://kaidindin.github.io/punisura/">
 <meta name="google-site-verification" content="tl6zSfZbgY7SJdKggf4uat4GSaNCkeOe48HiajlPHsE">
-<meta property="og:title" content="ぷにスラ大戦|スワイプで重力が変わる新感覚パズル">
-<meta property="og:description" content="スワイプだけで遊べる新感覚マッチ3バトル。連鎖で敵をぶっ飛ばせ!全国タイムアタックランキング開催中!">
+<meta property="og:title" content="ぷにスラ大戦(ぷにスラ)｜カイディンディン制作の無料パズル">
+<meta property="og:description" content="スワイプで重力が変わる新感覚マッチ3バトル。連鎖で敵をぶっ飛ばせ!全国タイムアタックランキング開催中!カイディンディン制作。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://kaidindin.github.io/punisura/">
 <meta property="og:image" content="https://kaidindin.github.io/punisura/ogp.png">
@@ -16,8 +19,9 @@
 <meta name="theme-color" content="#241b3d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ぷにスラ大戦">
-<link rel="manifest" href='data:application/manifest+json,{"name":"ぷにスラ大戦","short_name":"ぷにスラ","display":"standalone","background_color":"%23241b3d","theme_color":"%23241b3d","start_url":"https://kaidindin.github.io/punisura/","icons":[{"src":"https://kaidindin.github.io/punisura/ogp.png","sizes":"512x512","type":"image/png"}]}'>
+<link rel="manifest" href="https://kaidindin.github.io/puni_sura/manifest.json">
+<link rel="apple-touch-icon" href="https://kaidindin.github.io/puni_sura/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="https://kaidindin.github.io/puni_sura/icon-192.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"VideoGame","name":"ぷにスラ大戦","url":"https://kaidindin.github.io/punisura/","author":{"@type":"Person","name":"カイディンディン"},"genre":"Puzzle","gamePlatform":"Web","inLanguage":"ja","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}
 </script>
@@ -108,9 +112,9 @@ body.fever #board{background:rgba(255,255,255,.12)}
 #guide{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:rgba(20,12,40,.55);border-radius:20px;font-size:15px;font-weight:800;gap:8px;pointer-events:none;transition:opacity .4s;text-align:center;padding:0 20px}
 #guide.hint{background:rgba(20,12,40,.28)}
-#tutMsg{position:absolute;left:50%;top:-6px;transform:translateX(-50%);z-index:6;width:min(400px,92vw);
-  background:linear-gradient(180deg,#fff,#fff0d4);color:#3a2b52;border-radius:16px;padding:12px 16px;
-  font-size:14px;font-weight:800;line-height:1.55;text-align:center;box-shadow:0 6px 16px rgba(0,0,0,.4);
+#tutMsg{display:none;margin:2px auto 4px;width:min(400px,92vw);
+  background:linear-gradient(180deg,#fff,#fff0d4);color:#3a2b52;border-radius:16px;padding:11px 16px;
+  font-size:13.5px;font-weight:800;line-height:1.5;text-align:center;box-shadow:0 6px 16px rgba(0,0,0,.4);
   animation:tutPop .4s cubic-bezier(.2,1.6,.4,1)}
 #tutMsg b{color:#e0553d}
 #shuffleBtn{display:none;margin:6px auto 2px;z-index:7;
@@ -172,7 +176,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
 
 <div class="screen" id="title">
   <h1>ぷにスラ<br>大戦</h1>
-  <div class="sub">スワイプで重力が変わる 新感覚パズルバトル</div>
+  <div class="sub">スワイプで重力が変わる 新感覚パズルバトル<br><span style="font-size:11px;opacity:.7">お笑い芸人カイディンディン制作</span></div>
   <div id="titlePunis"></div>
   <div id="goldHint"></div>
   <div class="menu">
@@ -248,11 +252,11 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <span id="turnLabel"></span><span id="chainLabel"></span>
     <span><button class="iconBtn" onclick="Sfx.toggleBgm()" id="bgmBtn">🎵</button><button class="iconBtn" onclick="Sfx.toggle()" id="muteBtn">🔊</button></span>
   </div>
+  <div id="tutMsg" style="display:none"></div>
   <div id="boardWrap">
     <canvas id="board"></canvas>
     <canvas id="fx"></canvas>
     <div id="guide" style="display:none"><div class="arrow" id="guideArrow">👆</div><div id="guideText">スワイプで ぜんいん ころがる!</div></div>
-    <div id="tutMsg" style="display:none"></div>
   </div>
   <button id="shuffleBtn" onclick="Game.doShuffle()" style="display:none">🔀 シャッフル</button>
   <div class="meBar">
@@ -287,7 +291,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v3.3</div>
+<div class="credit">© カイディンディン ・ v3.5</div>
 <script>
 "use strict";
 /* =========================================================

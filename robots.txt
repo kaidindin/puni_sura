@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://kaidindin.github.io/puni_sura/sitemap.xml
