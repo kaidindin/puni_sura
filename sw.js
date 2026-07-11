@@ -1,5 +1,5 @@
 // キャッシュ名を上げると、古いキャッシュを自動で破棄して新版を配信する
-const CACHE='punisura-v3-5';
+const CACHE='punisura-v3-8';
 self.addEventListener('install',e=>{
   self.skipWaiting(); // 新SWを即座に有効化
 });

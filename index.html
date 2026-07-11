@@ -66,6 +66,18 @@ button{font-family:inherit;border:none;cursor:pointer}
   font-weight:800;padding:9px 20px;border-radius:99px;font-size:13px;box-shadow:0 3px 0 #d4a017;border:none;cursor:pointer}
 #a2hs .a2hsClose{display:block;margin:8px auto 0;background:none;border:none;color:rgba(255,255,255,.5);font-size:11px;cursor:pointer}
 #a2hs .shareIcon{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin:0 2px}
+#puzzleGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;width:min(340px,88vw)}
+.pzCell{aspect-ratio:1;border-radius:14px;background:var(--cream);color:var(--ink);border:none;
+  font-family:'Mochiy Pop One';font-size:19px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 3px 0 #c9b8d8;cursor:pointer;position:relative}
+.pzCell:active{transform:translateY(3px);box-shadow:0 0 0 #c9b8d8}
+.pzCell.cleared{background:linear-gradient(180deg,#ffe066,var(--lemon));box-shadow:0 3px 0 #d4a017}
+.pzCell .pzStar{font-size:10px;line-height:1;margin-top:2px;color:#e0553d}
+.pzCell.locked{opacity:.4}
+#pzInfo{width:min(430px,96vw);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:800;padding:0 4px;min-height:24px}
+#pzMoves{font-family:'Mochiy Pop One';color:var(--lemon)}
+#pzMoves.danger{color:var(--pink)}
+#pzGoal{font-size:12px;color:var(--sky)}
 
 .menu{display:flex;flex-direction:column;gap:11px;width:min(320px,84vw);margin-top:14px}
 .btn{padding:14px 20px;border-radius:18px;font-size:16px;font-weight:800;color:var(--ink);
@@ -191,10 +203,18 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <button class="btn" onclick="Game.startTutorial()">はじめての人へ<small>あそびかたを 1から おしえるよ</small><span class="badge">入門</span></button>
     <button class="btn" onclick="Game.startTA()"><span class="btnIco" data-ico="timer"></span>タイムアタック<small>タイムのおにを倒せ!全国ランキング</small></button>
     <button class="btn" onclick="UI.show('vstime')">ふたりで対戦<small>1台のスマホで交代バトル</small></button>
+    <button class="btn" onclick="Game.openPuzzle()">詰めぷに<small>〇手いないに 全部消せ!20問</small><span class="badge">新</span></button>
     <button class="btn ghost" onclick="Game.showRanking()">ランキング</button>
     <button class="btn ghost" onclick="UI.show('howto')">あそびかた</button>
   </div>
   <div id="a2hs" style="display:none"></div>
+</div>
+
+<div class="screen hidden" id="puzzleSelect">
+  <h2 class="pop" style="font-size:24px;margin-bottom:6px">詰めぷに</h2>
+  <div class="sub" style="margin-bottom:14px;font-size:12px;opacity:.85">きめられた手数で ぷにを全部消そう!</div>
+  <div id="puzzleGrid"></div>
+  <div class="menu" style="margin-top:14px"><button class="btn ghost" onclick="UI.show('title')">もどる</button></div>
 </div>
 
 <div class="screen hidden" id="level">
@@ -260,6 +280,10 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <span id="turnLabel"></span><span id="chainLabel"></span>
     <span><button class="iconBtn" onclick="Sfx.toggleBgm()" id="bgmBtn">🎵</button><button class="iconBtn" onclick="Sfx.toggle()" id="muteBtn">🔊</button></span>
   </div>
+  <div id="pzInfo" style="display:none">
+    <span id="pzGoal">ぷにを 全部消せ!</span>
+    <span id="pzMoves"></span>
+  </div>
   <div id="tutMsg" style="display:none"></div>
   <div id="boardWrap">
     <canvas id="board"></canvas>
@@ -282,8 +306,10 @@ body.fever #board{background:rgba(255,255,255,.12)}
   <div id="shougou"></div>
   <div class="stats" id="resultStats"></div>
   <div class="menu">
-    <button class="btn primary" onclick="Game.retry()">もういっかい</button>
-    <button class="btn" onclick="Game.shareX()">Xでじまんする</button>
+    <button class="btn primary" id="btnNextPuzzle" onclick="Game.nextPuzzle()" style="display:none">つぎの もんだいへ</button>
+    <button class="btn primary" id="btnRetry" onclick="Game.retry()">もういっかい</button>
+    <button class="btn" id="btnPuzzleSelect" onclick="Game.openPuzzle()" style="display:none">もんだいを えらぶ</button>
+    <button class="btn" id="btnShare" onclick="Game.shareX()">Xでじまんする</button>
     <button class="btn ghost" onclick="UI.show('title')">タイトルへ</button>
   </div>
 </div>
@@ -299,7 +325,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v3.6</div>
+<div class="credit">© カイディンディン ・ v3.8</div>
 <script>
 "use strict";
 /* =========================================================
@@ -496,6 +522,7 @@ function drawRock(ctx,x,y,r,cracked){
 </script>
 <script>
 /* ---------- 盤面 ---------- */
+const PUZZLES=[{"b":[[5,2,0,0],[4,0,0,0],[0,5,0,0],[3,2,1,0],[4,2,1,0],[5,3,1,0]],"m":2,"l":4,"h":["D","L"]},{"b":[[0,1,0,0],[2,5,0,0],[4,5,0,0],[0,3,0,0],[3,1,0,0],[4,3,0,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[4,4,0,0],[5,1,0,0],[0,0,0,0],[0,1,1,0],[2,0,1,0],[1,0,1,0]],"m":2,"l":4,"h":["D","L"]},{"b":[[5,2,0,0],[5,3,0,0],[3,3,0,0],[0,2,0,0],[4,0,0,0],[4,5,0,0],[5,0,0,0],[2,2,0,0],[2,1,0,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[1,3,0,0],[4,3,0,0],[2,5,0,0],[0,0,0,0],[5,5,0,0],[2,0,0,0],[4,0,0,0],[4,4,0,0],[3,1,0,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[4,4,0,0],[5,2,0,0],[2,0,0,0],[2,5,0,0],[1,5,0,0],[3,0,0,0],[1,4,0,0],[5,3,0,0],[4,3,0,0]],"m":2,"l":4,"h":["U","L"]},{"b":[[5,2,0,0],[5,3,0,0],[1,2,0,0],[4,2,0,0],[5,5,0,0],[2,4,0,0],[2,5,1,0],[1,0,1,0],[3,3,1,0]],"m":2,"l":4,"h":["R","U"]},{"b":[[3,4,0,0],[2,1,0,0],[2,5,1,0],[3,5,1,0],[3,3,0,0],[5,5,1,0],[4,5,0,0],[0,5,0,0],[0,1,0,0]],"m":3,"l":4,"h":["L","U"]},{"b":[[2,4,0,0],[0,2,0,0],[2,5,0,0],[4,0,1,0],[5,0,1,0],[2,3,1,0],[3,4,1,0],[4,5,1,0],[1,2,1,0]],"m":3,"l":4,"h":["D","U"]},{"b":[[1,5,0,0],[0,2,0,0],[4,4,0,0],[5,3,1,0],[4,2,1,0],[2,2,1,0],[1,4,1,0],[0,4,1,0],[4,3,1,0],[1,3,2,0],[2,5,2,0],[3,3,2,0],[2,1,0,1],[0,5,0,1]],"m":3,"l":4,"h":["U","D"]},{"b":[[2,2,0,0],[3,0,0,0],[2,4,0,0],[2,0,1,0],[1,4,1,0],[4,1,1,0],[1,2,2,0],[3,3,2,0],[3,4,2,0]],"m":4,"l":5,"h":["L","D"]},{"b":[[5,5,0,0],[0,3,0,0],[2,5,0,0],[4,0,0,0],[4,3,0,0],[5,4,0,0],[2,4,1,0],[1,0,1,0],[1,3,1,0]],"m":4,"l":5,"h":["U","L"]},{"b":[[4,1,0,0],[2,0,0,0],[1,5,0,0],[1,4,0,0],[3,2,0,0],[2,5,0,0],[5,4,1,0],[0,1,1,0],[1,1,1,0],[0,5,1,0],[4,2,1,0],[4,5,1,0]],"m":4,"l":5,"h":["D","L"]},{"b":[[1,5,1,0],[0,4,2,0],[0,5,0,0],[2,0,2,0],[0,1,2,0],[4,1,1,0],[3,2,1,0],[3,1,2,0],[3,0,2,0],[2,3,0,0],[0,3,2,0],[5,3,0,0]],"m":4,"l":5,"h":["U","L"]},{"b":[[5,3,0,0],[2,5,0,0],[1,0,1,0],[3,0,1,0],[0,2,1,0],[2,0,0,0],[4,3,0,0],[4,2,1,0],[3,1,1,0],[5,0,0,0],[4,1,1,0],[4,4,0,0],[0,0,0,1],[3,5,0,1]],"m":4,"l":5,"h":["D","L"]},{"b":[[3,4,1,0],[2,4,0,0],[0,0,0,0],[2,2,1,0],[3,1,0,0],[1,0,1,0],[4,1,0,0],[1,1,0,0],[1,2,0,0],[4,4,0,0],[3,0,0,0],[1,4,0,0],[0,1,0,0],[4,2,0,0],[2,0,0,0],[2,5,0,1],[0,3,0,1],[0,5,0,1]],"m":4,"l":4,"h":["R","D"]},{"b":[[1,1,0,0],[4,2,0,0],[2,0,0,0],[4,4,0,0],[5,5,0,0],[1,0,0,0],[4,0,0,0],[4,5,0,0],[0,4,0,0],[4,3,1,0],[3,3,1,0],[2,2,1,0]],"m":5,"l":6,"h":["L","R"]},{"b":[[4,5,1,0],[3,5,0,0],[0,1,1,0],[3,0,1,0],[2,5,1,0],[3,2,1,0],[0,0,0,0],[1,1,1,0],[3,1,0,0],[5,0,1,0],[1,5,1,0],[0,2,1,0],[4,2,0,1],[3,4,0,1]],"m":5,"l":6,"h":["R","D"]},{"b":[[5,2,0,0],[3,1,1,0],[4,4,0,0],[2,1,0,0],[0,5,0,0],[1,4,0,0],[4,1,0,0],[3,3,0,0],[2,5,0,0],[4,5,0,0],[1,3,1,0],[3,0,0,0],[4,2,1,0],[1,1,0,0],[0,2,0,0],[5,0,0,1],[0,1,0,1],[2,3,0,1]],"m":5,"l":5,"h":["U","D"]},{"b":[[5,0,1,0],[5,1,0,0],[4,4,1,0],[5,4,1,0],[3,0,1,0],[1,5,1,0],[0,5,1,0],[3,3,1,0],[2,1,0,0],[0,2,0,0],[4,0,0,0],[3,2,0,0],[4,2,1,0],[4,1,1,0],[0,1,0,0],[3,4,0,1],[3,5,0,1],[1,2,0,1]],"m":6,"l":6,"h":["U","L"]}];
 const N=6, TARGET_FILL=28;
 const DIRS={L:[-1,0],R:[1,0],U:[0,-1],D:[0,1]};
 const Board={
@@ -871,6 +898,166 @@ const Game={
 
   selectCpu(){ UI.show('level'); },
 
+  // ===== 詰めぷに(詰めパズル) =====
+  openPuzzle(){
+    const grid=document.getElementById('puzzleGrid');
+    const cleared=Store.get('pzCleared',{});
+    grid.innerHTML='';
+    PUZZLES.forEach((pz,i)=>{
+      const btn=document.createElement('button');
+      btn.className='pzCell'+(cleared[i]?' cleared':'');
+      const star = cleared[i]==='perfect' ? '★★★' : cleared[i] ? '★' : '';
+      btn.innerHTML=(i+1)+(star?`<span class="pzStar">${star}</span>`:'');
+      btn.onclick=()=>Game.startPuzzle(i);
+      grid.appendChild(btn);
+    });
+    UI.show('puzzleSelect');
+  },
+
+  startPuzzle(idx){
+    this.mode='puzzle'; this.pzIdx=idx;
+    const pz=PUZZLES[idx];
+    this.pzLimit=pz.l; this.pzMin=pz.m; this.pzMovesUsed=0;
+    // 盤面セット
+    Board.cells=pz.b.map(([x,y,c,r])=>Board.mk(x,y,c,!!r));
+    R.init();
+    this.over=false; this.busy=false; this.firstPlay=false;
+    // バトル用UIを隠し、パズル用UIを出す
+    document.querySelector('.foeBar').style.display='none';
+    document.querySelector('.gaugeRow').style.display='none';
+    document.querySelector('.meBar').style.display='none';
+    document.getElementById('pzInfo').style.display='flex';
+    document.getElementById('turnLabel').textContent='';
+    document.getElementById('chainLabel').style.opacity=0;
+    document.getElementById('guide').style.display='none';
+    this.hideShuffleBtn();
+    this.updatePzInfo();
+    UI.show('game');
+    cancelAnimationFrame(this.raf); this.last=performance.now();
+    const loop=now=>{
+      try{ const dt=Math.min(.05,(now-this.last)/1000); this.last=now; R.draw(dt); }catch(e){}
+      this.raf=requestAnimationFrame(loop);
+    };
+    this.raf=requestAnimationFrame(loop);
+    Sfx.startBgm();
+  },
+
+  updatePzInfo(){
+    const left=this.pzLimit-this.pzMovesUsed;
+    const el=document.getElementById('pzMoves');
+    el.textContent='のこり '+left+' 手';
+    el.classList.toggle('danger', left<=1);
+    document.getElementById('pzGoal').textContent='ぷにを 全部消せ! (最短'+this.pzMin+'手)';
+  },
+
+  puzzleRestore(){ // やり直し
+    this.startPuzzle(this.pzIdx);
+  },
+
+  async puzzleSwipe(dir){
+    if(this.busy||this.over) return;
+    Sfx.init(); this.busy=true;
+    try{
+      const moved=Board.slide(dir);
+      if(!moved){ Sfx.stuck(); return; }
+      Sfx.swipe(); this.pzMovesUsed++;
+      await wait(150);
+      let chain=0;
+      while(chain<20){
+        const m=Board.findMatches();
+        if(!m.length) break;
+        chain++;
+        Board.clear(m);
+        m.forEach((c,i)=>{ if(!c.rock)R.burst(c.gx,c.gy,c.color); Sfx.pop(chain,i); });
+        if(chain>=2){ R.bigText(chain+'れんさ!!',Math.min(26+chain*6,52)); Sfx.chainVoice(chain); shake(); }
+        await wait(300);
+        Board.cells=Board.cells.filter(c=>!c.dead);
+        Board.slide(dir); // 補充なしで詰める
+        await wait(150);
+      }
+      this.updatePzInfo();
+      const puniLeft=Board.cells.filter(c=>!c.dead&&!c.rock).length;
+      if(puniLeft===0){ this.puzzleClear(); return; }
+      if(this.pzMovesUsed>=this.pzLimit){ this.puzzleFail(); return; }
+    }catch(err){ console.error('puzzle:',err); }
+    finally{ this.busy=false; }
+  },
+
+  puzzleClear(){
+    this.over=true; this.busy=true; Sfx.stopBgm(); Sfx.win();
+    const perfect=this.pzMovesUsed<=this.pzMin;
+    const cleared=Store.get('pzCleared',{});
+    if(perfect) cleared[this.pzIdx]='perfect';
+    else if(cleared[this.pzIdx]!=='perfect') cleared[this.pzIdx]=true;
+    Store.set('pzCleared',cleared);
+    // クリアしたら失敗カウントをリセット
+    const fails=Store.get('pzFails',{}); fails[this.pzIdx]=0; Store.set('pzFails',fails);
+    const big=document.getElementById('resultText');
+    big.textContent=perfect?'パーフェクト!':'クリア!'; big.className='big pop win';
+    document.getElementById('shougou').textContent=perfect?'称号:最短の達人':'称号:詰めぷにクリア';
+    const isLast=this.pzIdx>=PUZZLES.length-1;
+    document.getElementById('resultStats').innerHTML=
+      `${this.pzMovesUsed}手で クリア!${perfect?' (最短だ!)':' (最短は'+this.pzMin+'手)'}<br>`+
+      (isLast?'ぜんもんだい クリア!すごい!':'つぎの もんだいに ちょうせん!');
+    this._share={winText:'詰めぷに第'+(this.pzIdx+1)+'問クリア!',isWin:true,title:perfect?'最短の達人':'詰めぷにクリア',sec:0,puzzle:true};
+    this.setResultButtons('puzzleClear', !isLast);
+    UI.show('result');
+  },
+
+  puzzleFail(){
+    this.over=true; this.busy=true; Sfx.stopBgm(); Sfx.lose();
+    // 失敗回数を記録
+    const fails=Store.get('pzFails',{});
+    fails[this.pzIdx]=(fails[this.pzIdx]||0)+1;
+    Store.set('pzFails',fails);
+    const failCount=fails[this.pzIdx];
+    const pz=PUZZLES[this.pzIdx];
+    const big=document.getElementById('resultText');
+    big.textContent='ざんねん!'; big.className='big pop lose';
+    document.getElementById('shougou').textContent='もう一回 かんがえよう';
+    const puniLeft=Board.cells.filter(c=>!c.dead&&!c.rock).length;
+    // ヒント:5回失敗で1手目、10回失敗で2手目まで
+    const dirWord={L:'⬅ ひだり',R:'みぎ ➡',U:'⬆ うえ',D:'した ⬇'};
+    let hintHtml='';
+    if(failCount>=10 && pz.h.length>=2){
+      hintHtml=`<br><br>💡ヒント:1手目は<b>${dirWord[pz.h[0]]}</b>、2手目は<b>${dirWord[pz.h[1]]}</b>にスワイプ!`;
+    } else if(failCount>=5 && pz.h.length>=1){
+      hintHtml=`<br><br>💡ヒント:まず<b>${dirWord[pz.h[0]]}</b>にスワイプしてみて!`+
+        (failCount>=8?'<br><span style="font-size:11px;opacity:.7">(あと'+(10-failCount)+'回 まちがえると 2手目も おしえるよ)</span>':'');
+    }
+    document.getElementById('resultStats').innerHTML=
+      `手数オーバー! ぷにが ${puniLeft}こ のこっちゃった<br>最短は ${pz.m}手。じっくり かんがえてみて!`+hintHtml;
+    this._share=null;
+    this.setResultButtons('puzzleFail', false);
+    UI.show('result');
+  },
+
+  nextPuzzle(){
+    const next=this.pzIdx+1;
+    if(next<PUZZLES.length) this.startPuzzle(next);
+    else this.openPuzzle();
+  },
+
+  // 結果画面のボタン出し分け
+  setResultButtons(kind, hasNext){
+    const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display=v?'block':'none'; };
+    if(kind==='puzzleClear'){
+      show('btnNextPuzzle',hasNext); show('btnRetry',true);
+      document.getElementById('btnRetry').textContent='もういっかい(この問題)';
+      show('btnPuzzleSelect',true); show('btnShare',true);
+    } else if(kind==='puzzleFail'){
+      show('btnNextPuzzle',false); show('btnRetry',true);
+      document.getElementById('btnRetry').textContent='もういっかい';
+      show('btnPuzzleSelect',true); show('btnShare',false);
+    } else { // 通常バトル
+      show('btnNextPuzzle',false); show('btnRetry',true);
+      document.getElementById('btnRetry').textContent='もういっかい';
+      show('btnPuzzleSelect',false); show('btnShare',true);
+    }
+  },
+
+
+
   startCpu(level){
     this.mode='cpu'; this.level=level;
     // ゲージ制:perSwipe=スワイプごとの進み(%) missMul=空振り倍率 idle=秒あたり dmg=攻撃力
@@ -908,6 +1095,10 @@ const Game={
 
   begin(){
     Board.reset(); R.init();
+    // パズルモードで隠した/出したUIを、バトル用に戻す
+    document.querySelector('.foeBar').style.display='flex';
+    document.querySelector('.meBar').style.display='flex';
+    document.getElementById('pzInfo').style.display='none';
     document.getElementById('foeHp').style.visibility='visible';
     document.querySelector('.gaugeRow').style.display='flex';
     this.meHp=this.meMax=100; this.foeHp=this.foeMax;
@@ -1115,6 +1306,7 @@ const Game={
     document.getElementById('shougou').textContent='称号:ぷにマスター見習い';
     document.getElementById('resultStats').innerHTML='あそびかたは バッチリ!<br>つぎは <b>CPUと たいせん</b> してみよう!';
     this._share={winText:'チュートリアル卒業!',isWin:true,title:'ぷにマスター見習い',sec:0};
+    this.setResultButtons('battle');
     UI.show('result');
   },
 
@@ -1170,6 +1362,7 @@ const Game={
       document.getElementById('resultStats').innerHTML=
         `⏱ 時間切れ!<br>1P(そら) のこりHP <b>${Math.ceil(this.meHp)}</b><br>2P(れもん) のこりHP <b>${Math.ceil(this.foeHp)}</b>`;
       this._share={winText:winner?winner+'のかち!':'ひきわけ!',isWin:!!winner,title:winner?'じかんない王者':'ごかくのライバル',sec:0};
+      this.setResultButtons('battle');
       UI.show('result');
     },500);
   },
@@ -1395,12 +1588,13 @@ const Game={
         document.getElementById('resultStats').innerHTML=
           `${desc}<br>さいだい連鎖 <b>${this.stats.maxChain}</b> れんさ ・ けしたぷに <b>${this.stats.pops}</b> ひき<br>ダブル消し <b>${this.stats.doubles}</b> かい ・ わったいわ <b>${this.stats.rocks}</b> こ${extra}`;
         if(this.stats.gold&&!Store.get('gold',false)){ Store.set('gold',true); Sfx.gold(); }
+        this.setResultButtons('battle');
         UI.show('result');
       },700);
     }
   },
 
-  retry(){ this.mode==='cpu'?this.startCpu(this.level):this.mode==='ta'?this.startTA():this.mode==='tutorial'?this.startTutorial():this.startVs((this.vsTimeLimit||0)/60); },
+  retry(){ this.mode==='cpu'?this.startCpu(this.level):this.mode==='ta'?this.startTA():this.mode==='tutorial'?this.startTutorial():this.mode==='puzzle'?this.startPuzzle(this.pzIdx):this.startVs((this.vsTimeLimit||0)/60); },
 
   shareX(){
     const s=this._share||{};
@@ -1445,7 +1639,7 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
     const dx=e.clientX-sx, dy=e.clientY-sy;
     if(Math.abs(dx)<24&&Math.abs(dy)<24) return;
     const dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'R':'L'):(dy>0?'D':'U');
-    if(inGame()) Game.swipe(dir);
+    if(inGame()) (Game.mode==='puzzle'?Game.puzzleSwipe(dir):Game.swipe(dir));
   };
   window.addEventListener('pointerdown',onDown);
   window.addEventListener('pointerup',onUp);
@@ -1455,7 +1649,7 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
   document.addEventListener('touchstart',e=>{ if(inGame()&&e.touches[0]&&e.touches[0].clientX<30) e.preventDefault(); },{passive:false});
   window.addEventListener('keydown',e=>{
     const m={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D'};
-    if(m[e.key]&&inGame()){ e.preventDefault(); Game.swipe(m[e.key]); }
+    if(m[e.key]&&inGame()){ e.preventDefault(); (Game.mode==='puzzle'?Game.puzzleSwipe(m[e.key]):Game.swipe(m[e.key])); }
   });
 })();
 
