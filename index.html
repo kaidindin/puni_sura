@@ -59,6 +59,13 @@ button{font-family:inherit;border:none;cursor:pointer}
 @keyframes hop{0%,100%{transform:translateY(0) scaleY(1)}30%{transform:translateY(-14px) scaleY(1.06)}45%{transform:translateY(0) scaleY(.92)}}
 @keyframes bounceIn{0%{transform:scale(.3)}100%{transform:scale(1)}}
 #goldHint{font-size:10px;opacity:.4;margin-bottom:4px;min-height:14px}
+#a2hs{margin-top:16px;width:min(320px,84vw);background:rgba(255,255,255,.1);border:1.5px dashed rgba(255,255,255,.3);
+  border-radius:16px;padding:12px 16px;font-size:12px;line-height:1.6;text-align:center;animation:tutPop .5s cubic-bezier(.2,1.6,.4,1)}
+#a2hs b{color:var(--lemon)}
+#a2hs .a2hsBtn{margin-top:8px;display:inline-block;background:linear-gradient(180deg,#ffe066,var(--lemon));color:var(--ink);
+  font-weight:800;padding:9px 20px;border-radius:99px;font-size:13px;box-shadow:0 3px 0 #d4a017;border:none;cursor:pointer}
+#a2hs .a2hsClose{display:block;margin:8px auto 0;background:none;border:none;color:rgba(255,255,255,.5);font-size:11px;cursor:pointer}
+#a2hs .shareIcon{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin:0 2px}
 
 .menu{display:flex;flex-direction:column;gap:11px;width:min(320px,84vw);margin-top:14px}
 .btn{padding:14px 20px;border-radius:18px;font-size:16px;font-weight:800;color:var(--ink);
@@ -187,6 +194,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     <button class="btn ghost" onclick="Game.showRanking()">ランキング</button>
     <button class="btn ghost" onclick="UI.show('howto')">あそびかた</button>
   </div>
+  <div id="a2hs" style="display:none"></div>
 </div>
 
 <div class="screen hidden" id="level">
@@ -291,7 +299,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v3.5</div>
+<div class="credit">© カイディンディン ・ v3.6</div>
 <script>
 "use strict";
 /* =========================================================
@@ -1479,7 +1487,49 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
   });
 })();
 
-/* ---------- PWA Service Worker(同階層のsw.jsがあれば) ---------- */
+/* ---------- ホーム画面に追加(PWAインストール)案内 ---------- */
+(()=>{
+  const a2hs=document.getElementById('a2hs');
+  if(!a2hs) return;
+  // 既にアプリとして起動中なら案内不要
+  const standalone=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if(standalone) return;
+  // 前に「とじる」したら一定期間出さない
+  if(Store.get('a2hsClosed',0) > Date.now()) return;
+
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  let deferredPrompt=null;
+
+  const showBanner=(type)=>{
+    if(type==='ios'){
+      a2hs.innerHTML='📱 <b>ホーム画面に追加</b>すると<br>アプリみたいに全画面で遊べるよ!<br><span style="opacity:.85">下の 共有ボタン から<br>「ホーム画面に追加」を えらんでね</span>'
+        +'<button class="a2hsClose">とじる</button>';
+    } else {
+      a2hs.innerHTML='📱 <b>アプリとして追加</b>して すぐ遊べる!'
+        +'<button class="a2hsBtn">ホーム画面に追加</button>'
+        +'<button class="a2hsClose">とじる</button>';
+    }
+    a2hs.style.display='block';
+    const btn=a2hs.querySelector('.a2hsBtn');
+    if(btn) btn.addEventListener('click',doInstall);
+    a2hs.querySelector('.a2hsClose').addEventListener('click',close);
+  };
+  const doInstall=async()=>{
+    if(!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try{ await deferredPrompt.userChoice; }catch(e){}
+    deferredPrompt=null; a2hs.style.display='none';
+  };
+  const close=()=>{
+    a2hs.style.display='none';
+    Store.set('a2hsClosed', Date.now()+7*24*3600*1000); // 7日間は出さない
+  };
+
+  // Android等:インストール可能になったらボタン表示
+  window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); deferredPrompt=e; showBanner('android'); });
+  // iOSはbeforeinstallpromptが無いので、少し待って共有案内を表示
+  if(isIOS) setTimeout(()=>showBanner('ios'),1800);
+})();
 /* ---------- 戻る/端スワイプでサイトから出てしまうのを防ぐ ---------- */
 (()=>{
   // ダミー履歴を積んでおき、「戻る」が来たら押し戻す
