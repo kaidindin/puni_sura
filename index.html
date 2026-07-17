@@ -53,6 +53,11 @@ button{font-family:inherit;border:none;cursor:pointer}
   filter:drop-shadow(0 4px 0 rgba(0,0,0,.35));animation:bounceIn .6s cubic-bezier(.2,1.6,.4,1)}
 #title .sub{margin-top:6px;font-size:14px;opacity:.9;text-align:center}
 #titlePunis{display:flex;gap:10px;margin:22px 0 4px}
+#modeSwitch{display:flex;gap:8px;margin:10px 0 2px;background:rgba(0,0,0,.3);padding:5px;border-radius:99px}
+.mBtn{background:transparent;color:rgba(255,255,255,.55);border:none;padding:7px 18px;border-radius:99px;
+  font-family:'Mochiy Pop One';font-size:14px;line-height:1.2;transition:.2s;cursor:pointer}
+.mBtn span{display:block;font-family:'M PLUS Rounded 1c';font-size:9px;font-weight:500;opacity:.8}
+.mBtn.active{background:linear-gradient(180deg,#ffe066,var(--lemon));color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .tPuni{width:52px;height:52px;animation:hop 1.4s ease-in-out infinite}
 .tPuni:nth-child(2){animation-delay:.15s}.tPuni:nth-child(3){animation-delay:.3s}
 .tPuni:nth-child(4){animation-delay:.45s}.tPuni:nth-child(5){animation-delay:.6s}
@@ -170,6 +175,10 @@ body.fever #board{background:rgba(255,255,255,.12)}
 .rankRow .rname{flex:1;margin:0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rankRow.top1{color:var(--lemon);font-weight:800}
 .rankNote{font-size:10px;opacity:.55;margin-top:8px;text-align:center;line-height:1.6}
+#rankTabs{display:flex;gap:8px;margin-bottom:10px;background:rgba(0,0,0,.3);padding:4px;border-radius:99px}
+.rkTab{background:transparent;color:rgba(255,255,255,.55);border:none;padding:8px 16px;border-radius:99px;
+  font-family:'M PLUS Rounded 1c';font-weight:800;font-size:12px;cursor:pointer;transition:.2s}
+.rkTab.active{background:linear-gradient(180deg,#ffe066,var(--lemon));color:var(--ink)}
 
 #cutin{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:50}
 #cutin span{font-family:'Mochiy Pop One';font-size:clamp(42px,15vw,84px);color:var(--lemon);
@@ -196,6 +205,10 @@ body.fever #board{background:rgba(255,255,255,.12)}
   <h1>ぷにスラ<br>大戦</h1>
   <div class="sub">スワイプで重力が変わる 新感覚パズルバトル<br><span style="font-size:11px;opacity:.7">お笑い芸人カイディンディン制作</span></div>
   <div id="titlePunis"></div>
+  <div id="modeSwitch">
+    <button class="mBtn active" id="mBtn5" onclick="Game.setColorMode(5)">5色<span>ノーマル</span></button>
+    <button class="mBtn" id="mBtn4" onclick="Game.setColorMode(4)">4色<span>シンプル</span></button>
+  </div>
   <div class="menu">
     <button class="btn primary pop" onclick="Game.selectCpu()">ひとりで対戦<small>CPUとバトル</small></button>
     <button class="btn" onclick="Game.startTutorial()">はじめての人へ<small>あそびかたを 1から おしえるよ</small><span class="badge">入門</span></button>
@@ -253,7 +266,11 @@ body.fever #board{background:rgba(255,255,255,.12)}
 </div>
 
 <div class="screen hidden" id="ranking">
-  <h2 class="pop" style="font-size:24px;margin-bottom:12px"><span class="btnIco" data-ico="trophy"></span>タイムアタック全国ランキング</h2>
+  <h2 class="pop" style="font-size:24px;margin-bottom:10px"><span class="btnIco" data-ico="trophy"></span>タイムアタック全国ランキング</h2>
+  <div id="rankTabs">
+    <button class="rkTab active" id="rkTab5" onclick="Game.showRanking('normal')">5色 ノーマル</button>
+    <button class="rkTab" id="rkTab4" onclick="Game.showRanking('simple')">4色 シンプル</button>
+  </div>
   <div class="card"><div id="rankList">よみこみちゅう…</div>
   <div class="rankNote">※ニックネームは全国に公開されます。本名は使わないでね!</div></div>
   <div class="menu"><button class="btn ghost" onclick="UI.show('title')">もどる</button></div>
@@ -323,7 +340,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v4.0</div>
+<div class="credit">© カイディンディン ・ v4.3</div>
 <script>
 "use strict";
 /* =========================================================
@@ -452,7 +469,18 @@ const Sfx = {
 document.addEventListener('pointerdown',()=>Sfx.init());
 document.querySelectorAll('.btn').forEach(b=>b.addEventListener('pointerdown',()=>Sfx.btn()));
 
-const UI={ show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); if(id!=='game')Sfx.stopBgm(); } };
+const UI={ show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  if(id!=='game') Sfx.stopBgm();
+  // タイトルに戻ったら、選んでいる色数モードを復元(詰めぷにで5色固定にした後の対策)
+  if(id==='title'){
+    Board.colorCount=Store.get('colorMode',5);
+    const b5=document.getElementById('mBtn5'), b4=document.getElementById('mBtn4');
+    if(b5&&b4){ b5.classList.toggle('active',Board.colorCount===5); b4.classList.toggle('active',Board.colorCount===4); }
+    if(typeof renderTitlePunis==='function') renderTitlePunis();
+  }
+} };
 
 /* ---------- ローカル保存(プレビュー環境でも落ちない) ---------- */
 const Store={
@@ -516,18 +544,20 @@ function drawRock(ctx,x,y,r,cracked){
 </script>
 <script>
 /* ---------- 盤面 ---------- */
-const PUZZLES=[{"b":[[5,2,0,0],[4,0,0,0],[0,5,0,0],[3,2,1,0],[4,2,1,0],[5,3,1,0]],"m":2,"l":4,"h":["D","L"]},{"b":[[0,1,0,0],[2,5,0,0],[4,5,0,0],[0,3,0,0],[3,1,0,0],[4,3,0,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[4,4,0,0],[5,1,0,0],[0,0,0,0],[0,1,1,0],[2,0,1,0],[1,0,1,0]],"m":2,"l":4,"h":["D","L"]},{"b":[[5,2,0,0],[5,3,0,0],[3,3,0,0],[0,2,0,0],[4,0,0,0],[4,5,0,0],[5,0,0,0],[2,2,0,0],[2,1,0,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[1,3,0,0],[4,3,0,0],[2,5,0,0],[0,0,0,0],[5,5,0,0],[2,0,0,0],[4,0,0,0],[4,4,0,0],[3,1,0,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[4,4,0,0],[5,2,0,0],[2,0,0,0],[2,5,0,0],[1,5,0,0],[3,0,0,0],[1,4,0,0],[5,3,0,0],[4,3,0,0]],"m":2,"l":4,"h":["U","L"]},{"b":[[5,2,0,0],[5,3,0,0],[1,2,0,0],[4,2,0,0],[5,5,0,0],[2,4,0,0],[2,5,1,0],[1,0,1,0],[3,3,1,0]],"m":2,"l":4,"h":["R","U"]},{"b":[[3,4,0,0],[2,1,0,0],[2,5,1,0],[3,5,1,0],[3,3,0,0],[5,5,1,0],[4,5,0,0],[0,5,0,0],[0,1,0,0]],"m":3,"l":4,"h":["L","U"]},{"b":[[2,4,0,0],[0,2,0,0],[2,5,0,0],[4,0,1,0],[5,0,1,0],[2,3,1,0],[3,4,1,0],[4,5,1,0],[1,2,1,0]],"m":3,"l":4,"h":["D","U"]},{"b":[[1,5,0,0],[0,2,0,0],[4,4,0,0],[5,3,1,0],[4,2,1,0],[2,2,1,0],[1,4,1,0],[0,4,1,0],[4,3,1,0],[1,3,2,0],[2,5,2,0],[3,3,2,0],[2,1,0,1],[0,5,0,1]],"m":3,"l":4,"h":["U","D"]},{"b":[[2,2,0,0],[3,0,0,0],[2,4,0,0],[2,0,1,0],[1,4,1,0],[4,1,1,0],[1,2,2,0],[3,3,2,0],[3,4,2,0]],"m":4,"l":5,"h":["L","D"]},{"b":[[5,5,0,0],[0,3,0,0],[2,5,0,0],[4,0,0,0],[4,3,0,0],[5,4,0,0],[2,4,1,0],[1,0,1,0],[1,3,1,0]],"m":4,"l":5,"h":["U","L"]},{"b":[[4,1,0,0],[2,0,0,0],[1,5,0,0],[1,4,0,0],[3,2,0,0],[2,5,0,0],[5,4,1,0],[0,1,1,0],[1,1,1,0],[0,5,1,0],[4,2,1,0],[4,5,1,0]],"m":4,"l":5,"h":["D","L"]},{"b":[[1,5,1,0],[0,4,2,0],[0,5,0,0],[2,0,2,0],[0,1,2,0],[4,1,1,0],[3,2,1,0],[3,1,2,0],[3,0,2,0],[2,3,0,0],[0,3,2,0],[5,3,0,0]],"m":4,"l":5,"h":["U","L"]},{"b":[[5,3,0,0],[2,5,0,0],[1,0,1,0],[3,0,1,0],[0,2,1,0],[2,0,0,0],[4,3,0,0],[4,2,1,0],[3,1,1,0],[5,0,0,0],[4,1,1,0],[4,4,0,0],[0,0,0,1],[3,5,0,1]],"m":4,"l":5,"h":["D","L"]},{"b":[[3,4,1,0],[2,4,0,0],[0,0,0,0],[2,2,1,0],[3,1,0,0],[1,0,1,0],[4,1,0,0],[1,1,0,0],[1,2,0,0],[4,4,0,0],[3,0,0,0],[1,4,0,0],[0,1,0,0],[4,2,0,0],[2,0,0,0],[2,5,0,1],[0,3,0,1],[0,5,0,1]],"m":4,"l":4,"h":["R","D"]},{"b":[[1,1,0,0],[4,2,0,0],[2,0,0,0],[4,4,0,0],[5,5,0,0],[1,0,0,0],[4,0,0,0],[4,5,0,0],[0,4,0,0],[4,3,1,0],[3,3,1,0],[2,2,1,0]],"m":5,"l":6,"h":["L","R"]},{"b":[[4,5,1,0],[3,5,0,0],[0,1,1,0],[3,0,1,0],[2,5,1,0],[3,2,1,0],[0,0,0,0],[1,1,1,0],[3,1,0,0],[5,0,1,0],[1,5,1,0],[0,2,1,0],[4,2,0,1],[3,4,0,1]],"m":5,"l":6,"h":["R","D"]},{"b":[[5,2,0,0],[3,1,1,0],[4,4,0,0],[2,1,0,0],[0,5,0,0],[1,4,0,0],[4,1,0,0],[3,3,0,0],[2,5,0,0],[4,5,0,0],[1,3,1,0],[3,0,0,0],[4,2,1,0],[1,1,0,0],[0,2,0,0],[5,0,0,1],[0,1,0,1],[2,3,0,1]],"m":5,"l":5,"h":["U","D"]},{"b":[[5,0,1,0],[5,1,0,0],[4,4,1,0],[5,4,1,0],[3,0,1,0],[1,5,1,0],[0,5,1,0],[3,3,1,0],[2,1,0,0],[0,2,0,0],[4,0,0,0],[3,2,0,0],[4,2,1,0],[4,1,1,0],[0,1,0,0],[3,4,0,1],[3,5,0,1],[1,2,0,1]],"m":6,"l":6,"h":["U","L"]}];
+const PUZZLES=[{"b":[[2,0,4,0],[5,1,4,0],[0,2,4,0],[3,5,2,0],[4,4,2,0],[2,2,2,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[5,4,0,0],[1,3,0,0],[3,2,0,0],[5,0,1,0],[0,3,1,0],[1,2,1,0]],"m":2,"l":4,"h":["R","U"]},{"b":[[5,2,4,0],[3,4,4,0],[4,3,4,0],[2,2,2,0],[5,1,2,0],[1,2,2,0]],"m":2,"l":4,"h":["D","L"]},{"b":[[4,1,0,0],[2,5,0,0],[5,3,0,0],[1,4,4,0],[4,2,4,0],[5,2,4,0],[1,1,1,0],[4,0,1,0],[2,2,1,0]],"m":2,"l":3,"h":["U","L"]},{"b":[[3,2,1,0],[1,5,1,0],[4,3,1,0],[3,5,1,0],[5,5,1,0],[0,1,1,0],[3,3,3,0],[0,4,3,0],[3,0,3,0],[1,2,3,0],[5,3,3,0],[5,2,3,0]],"m":2,"l":4,"h":["L","U"]},{"b":[[2,2,3,0],[2,3,1,0],[2,1,4,0],[1,5,1,0],[0,4,1,0],[3,5,3,0],[3,2,4,0],[5,4,3,0],[0,0,4,0]],"m":3,"l":4,"h":["L","R"]},{"b":[[5,0,2,0],[3,1,2,0],[1,2,2,0],[4,4,4,0],[0,5,4,0],[5,4,4,0],[3,3,3,0],[2,4,3,0],[2,1,3,0]],"m":3,"l":4,"h":["R","L"]},{"b":[[4,0,2,0],[0,2,2,0],[5,4,2,0],[2,5,2,0],[1,5,2,0],[2,2,2,0],[1,2,1,0],[3,3,1,0],[3,5,1,0],[4,3,1,0],[4,1,1,0],[3,2,1,0]],"m":3,"l":5,"h":["D","U"]},{"b":[[1,2,2,0],[3,0,2,0],[1,5,2,0],[3,2,2,0],[2,3,2,0],[4,1,2,0],[5,2,4,0],[2,1,4,0],[2,0,4,0],[4,4,4,0],[2,4,4,0],[0,4,4,0]],"m":3,"l":5,"h":["L","R"]},{"b":[[0,4,4,0],[5,4,4,0],[5,0,4,0],[5,5,4,0],[3,2,4,0],[4,1,4,0],[1,3,0,0],[3,3,0,0],[3,1,0,0],[2,2,0,0],[1,4,0,0],[2,5,0,0]],"m":3,"l":5,"h":["U","D"]},{"b":[[3,4,2,0],[1,5,2,0],[1,1,2,0],[4,1,2,0],[4,3,2,0],[2,0,2,0],[2,1,1,0],[5,4,1,0],[3,2,1,0],[4,4,1,0],[5,3,1,0],[3,1,1,0],[5,5,3,0],[1,3,3,0],[2,4,3,0],[2,5,3,0],[4,5,3,0],[1,4,3,0]],"m":3,"l":4,"h":["R","U"]},{"b":[[3,5,4,0],[2,3,4,0],[5,0,4,0],[2,0,4,0],[4,1,4,0],[1,2,4,0],[1,4,0,0],[4,4,0,0],[2,5,0,0],[3,0,0,0],[1,0,0,0],[1,5,0,0],[2,4,2,0],[4,2,2,0],[5,5,2,0],[0,3,2,0],[0,2,2,0],[5,2,2,0]],"m":4,"l":5,"h":["U","D"]},{"b":[[4,1,4,0],[3,2,4,0],[2,2,4,0],[5,5,4,0],[3,1,4,0],[4,0,4,0],[3,5,3,0],[5,3,3,0],[0,2,3,0],[2,4,3,0],[4,2,3,0],[0,4,3,0],[2,5,0,0],[3,3,0,0],[1,5,0,0],[5,2,0,0],[5,4,0,0],[1,1,0,0]],"m":4,"l":5,"h":["L","U"]},{"b":[[1,3,1,0],[0,4,1,0],[3,2,1,0],[3,4,1,0],[1,5,1,0],[5,5,1,0],[2,2,2,0],[5,0,2,0],[0,5,2,0],[2,3,2,0],[4,0,2,0],[0,0,2,0],[4,4,4,0],[0,3,4,0],[4,1,4,0],[5,3,4,0],[4,5,4,0],[0,2,4,0]],"m":4,"l":5,"h":["L","U"]},{"b":[[3,0,0,0],[2,1,0,0],[1,1,0,0],[5,2,0,0],[0,3,0,0],[4,1,0,0],[4,2,4,0],[0,5,4,0],[2,2,4,0],[1,5,4,0],[4,0,4,0],[5,1,4,0],[3,4,3,0],[1,4,3,0],[5,3,3,0],[5,0,3,0],[2,5,3,0],[0,0,3,0],[0,4,0,1],[0,2,0,1]],"m":4,"l":5,"h":["D","R"]},{"b":[[4,2,4,0],[0,3,4,0],[5,0,4,0],[3,4,4,0],[3,0,4,0],[2,4,4,0],[0,0,0,0],[2,1,0,0],[0,4,0,0],[1,0,0,0],[4,3,0,0],[0,1,0,0],[2,0,2,0],[3,3,2,0],[5,2,2,0],[2,2,2,0],[3,1,2,0],[2,5,2,0],[5,1,0,1],[1,5,0,1]],"m":5,"l":6,"h":["R","D"]},{"b":[[5,5,4,0],[2,5,4,0],[3,4,4,0],[1,5,4,0],[2,1,4,0],[1,4,4,0],[4,1,3,0],[5,4,3,0],[2,0,3,0],[5,0,3,0],[4,0,3,0],[5,1,3,0],[0,4,1,0],[0,1,1,0],[5,3,1,0],[0,3,1,0],[4,2,1,0],[3,0,1,0],[1,2,0,1],[3,3,0,1]],"m":5,"l":6,"h":["D","L"]},{"b":[[1,5,1,0],[4,1,1,0],[1,4,1,0],[3,0,1,0],[0,2,1,0],[1,0,1,0],[5,2,3,0],[2,5,3,0],[1,3,3,0],[5,0,3,0],[0,3,3,0],[4,0,3,0],[3,5,2,0],[4,3,2,0],[0,0,2,0],[0,1,2,0],[3,2,2,0],[3,4,2,0],[3,3,0,0],[5,5,0,0],[2,1,0,0],[4,4,0,0],[2,4,0,0],[2,2,0,0],[5,1,0,1],[1,2,0,1],[1,1,0,1]],"m":6,"l":6,"h":["L","D"]},{"b":[[0,0,4,0],[0,2,4,0],[0,4,4,0],[5,0,4,0],[1,2,4,0],[5,3,4,0],[2,3,1,0],[5,5,1,0],[4,1,1,0],[0,3,1,0],[4,3,1,0],[2,0,1,0],[4,0,2,0],[4,5,2,0],[1,1,2,0],[3,4,2,0],[3,5,2,0],[1,4,2,0],[5,2,3,0],[1,5,3,0],[5,1,3,0],[1,0,3,0],[0,5,3,0],[3,1,3,0],[1,3,0,1],[2,5,0,1],[2,1,0,1]],"m":6,"l":6,"h":["U","L"]},{"b":[[3,0,3,0],[3,3,3,0],[5,4,3,0],[0,3,3,0],[1,5,3,0],[1,4,3,0],[3,1,1,0],[4,4,1,0],[2,1,1,0],[0,1,1,0],[0,5,1,0],[2,4,1,0],[1,3,0,0],[2,2,0,0],[1,2,0,0],[1,0,0,0],[4,3,0,0],[5,3,0,0],[5,1,2,0],[2,0,2,0],[2,3,2,0],[5,5,2,0],[5,0,2,0],[0,2,2,0],[4,5,0,1],[2,5,0,1],[1,1,0,1]],"m":6,"l":6,"h":["D","L"]}];
 const N=6, TARGET_FILL=28;
 const DIRS={L:[-1,0],R:[1,0],U:[0,-1],D:[0,1]};
 const Board={
   cells:[],
+  colorCount:5, // 5=ノーマル(全色) 4=シンプル(赤青黄緑)
+  randColor(){ return Math.floor(Math.random()*this.colorCount); },
   grid(){ const g=Array.from({length:N},()=>Array(N).fill(null)); this.cells.forEach(c=>{ if(!c.dead) g[c.gy][c.gx]=c; }); return g; },
   reset(){
     this.cells=[]; let placed=0,guard=0;
     while(placed<TARGET_FILL&&guard++<600){
       const gx=Math.floor(Math.random()*N),gy=Math.floor(Math.random()*N);
       if(this.at(gx,gy)) continue;
-      this.cells.push(this.mk(gx,gy,Math.floor(Math.random()*5)));
+      this.cells.push(this.mk(gx,gy,this.randColor()));
       if(this.findMatches().length){ this.cells.pop(); continue; }
       placed++;
     }
@@ -601,7 +631,7 @@ const Board={
     empt.sort((a,b)=> dx?(a[0]-b[0])*dx:(a[1]-b[1])*dy);
     for(let i=0;i<Math.min(need,empt.length);i++){
       const [x,y]=empt[i];
-      const c=this.mk(x,y,Math.floor(Math.random()*5));
+      const c=this.mk(x,y,this.randColor());
       c.appear=0; this.cells.push(c);
     }
   },
@@ -644,10 +674,10 @@ const Board={
       if(!this.findMatches().length) return;
     }
     // シャッフルで解消できない場合(色が偏りすぎ):色を散らして強制解消
-    live.forEach((c,i)=>c.color=i%5);
+    live.forEach((c,i)=>c.color=i%this.colorCount);
     let guard=0;
     while(this.findMatches().length && guard++<80){
-      const m=this.findMatches(); m[0].color=(m[0].color+1)%5;
+      const m=this.findMatches(); m[0].color=(m[0].color+1)%this.colorCount;
     }
   },
   // 消せる手が枯れた時の救済:消せる手がある盤面になるまで作り直す(岩は消える)
@@ -666,7 +696,7 @@ const Board={
       for(let i=positions.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [positions[i],positions[j]]=[positions[j],positions[i]]; }
       const cells2=[]; let idx=0;
       for(let r=0;r<rockCount;r++){ const [x,y]=positions[idx++]; cells2.push(this.mk(x,y,0,true)); }
-      for(let p=0;p<puniCount;p++){ const [x,y]=positions[idx++]; cells2.push(this.mk(x,y,Math.floor(Math.random()*5))); }
+      for(let p=0;p<puniCount;p++){ const [x,y]=positions[idx++]; cells2.push(this.mk(x,y,this.randColor())); }
       this.cells=cells2;
       guard++;
     } while((this.findMatches().length>0 || !this.canClear()) && guard<60);
@@ -844,21 +874,22 @@ const SUPABASE_URL='https://vdjirxautmudhucirieh.supabase.co';
 const SUPABASE_KEY='sb_publishable_o1zhnZlqFXBR-OuVQ49CkA_JX-Rl5Tw';
 const Rank={
   enabled(){ return SUPABASE_URL&&SUPABASE_KEY; },
-  async submit(name,timeSec){
+  async submit(name,timeSec,mode){
     if(!this.enabled()) return false;
     try{
       const r=await fetch(`${SUPABASE_URL}/rest/v1/punisura_ranking`,{
         method:'POST',
         headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-        body:JSON.stringify({name:name.slice(0,12),time_sec:Math.round(timeSec*10)/10})
+        body:JSON.stringify({name:name.slice(0,12),time_sec:Math.round(timeSec*10)/10,mode:mode||'normal'})
       });
       return r.ok;
     }catch(e){ return false; }
   },
-  async top(){
+  async top(mode){
     if(!this.enabled()) return null;
     try{
-      const r=await fetch(`${SUPABASE_URL}/rest/v1/punisura_ranking?select=name,time_sec&order=time_sec.asc&limit=20`,
+      const m=mode||'normal';
+      const r=await fetch(`${SUPABASE_URL}/rest/v1/punisura_ranking?select=name,time_sec&mode=eq.${m}&order=time_sec.asc&limit=20`,
         {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
       return r.ok?await r.json():null;
     }catch(e){ return null; }
@@ -888,6 +919,17 @@ const Game={
   feverGauge:0,fever:false,feverEnd:0,
   vsTurn:0,vsSwipes:0,raf:0,last:0,firstPlay:true,
 
+  // ===== 色数モード切替(5色ノーマル / 4色シンプル) =====
+  setColorMode(n){
+    Board.colorCount=n;
+    Store.set('colorMode',n);
+    document.getElementById('mBtn5').classList.toggle('active',n===5);
+    document.getElementById('mBtn4').classList.toggle('active',n===4);
+    // タイトルのぷに表示も色数に合わせる
+    if(typeof renderTitlePunis==='function') renderTitlePunis();
+    Sfx.btn();
+  },
+
   selectCpu(){ UI.show('level'); },
 
   // ===== 詰めぷに(詰めパズル) =====
@@ -908,6 +950,7 @@ const Game={
 
   startPuzzle(idx){
     this.mode='puzzle'; this.pzIdx=idx;
+    Board.colorCount=5; // 詰めぷにの問題は5色前提なので固定
     const pz=PUZZLES[idx];
     this.pzLimit=pz.l; this.pzMin=pz.m; this.pzMovesUsed=0;
     // 盤面セット
@@ -1567,13 +1610,16 @@ const Game={
         document.getElementById('shougou').textContent='称号:'+title;
         let extra='';
         if(this.mode==='ta'&&isWin){
-          const best=Store.get('bestTA',null);
+          const cmode=Board.colorCount===4?'simple':'normal';
+          const bestKey='bestTA_'+cmode;
+          const best=Store.get(bestKey,null);
           const isBest=best===null||sec<best;
-          if(isBest) Store.set('bestTA',sec);
-          extra=`<br>タイム <b>${sec}</b> びょう ${isBest?'🎉じこベスト!':`(ベスト ${best})`}`;
+          if(isBest) Store.set(bestKey,sec);
+          const modeName=Board.colorCount===4?'4色':'5色';
+          extra=`<br>${modeName} タイム <b>${sec}</b> びょう ${isBest?'🎉じこベスト!':`(ベスト ${best})`}`;
           if(Rank.enabled()&&isBest){
-            const name=prompt('全国ランキングにとうろく!ニックネーム(12文字まで・本名NG)','ぷにマスター');
-            if(name) await Rank.submit(name,sec);
+            const name=prompt(modeName+'の全国ランキングにとうろく!ニックネーム(12文字まで・本名NG)','ぷにマスター');
+            if(name) await Rank.submit(name,sec,cmode);
           }
         }
         document.getElementById('resultStats').innerHTML=
@@ -1596,21 +1642,27 @@ const Game={
     window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t)+'&url='+encodeURIComponent('https://kaidindin.github.io/punisura/'),'_blank');
   },
 
-  async showRanking(){
+  async showRanking(cmode){
     UI.show('ranking');
+    // 指定がなければ現在の色数モード
+    const m=cmode||(Board.colorCount===4?'simple':'normal');
+    this._rankMode=m;
+    // タブの見た目を更新
+    document.getElementById('rkTab5').classList.toggle('active',m==='normal');
+    document.getElementById('rkTab4').classList.toggle('active',m==='simple');
     const el=document.getElementById('rankList');
-    const best=Store.get('bestTA',null);
+    const best=Store.get('bestTA_'+m,null);
     let html=best?`<div class="rankRow top1"><span>あなたのベスト</span><span>${best}びょう</span></div>`:'';
     if(!Rank.enabled()){
       el.innerHTML=html+'<div style="padding:14px;font-size:12px;opacity:.7;line-height:1.7">全国ランキングはただいま準備ちゅう!<br>タイムアタックで自己ベストにちょうせんしよう!</div>';
       return;
     }
     el.innerHTML=html+'よみこみちゅう…';
-    const rows=await Rank.top();
+    const rows=await Rank.top(m);
     if(!rows){ el.innerHTML=html+'<div style="padding:14px;font-size:12px">つうしんエラー…また後でみてね</div>'; return; }
-    el.innerHTML=html+rows.map((r,i)=>
+    el.innerHTML=html+(rows.map((r,i)=>
       `<div class="rankRow ${i===0?'top1':''}"><span>${['🥇','🥈','🥉'][i]||(i+1)+'位'}</span><span class="rname">${esc(r.name)}</span><span>${r.time_sec}びょう</span></div>`
-    ).join('')||'まだだれもいない!1位のチャンス!';
+    ).join('')||'<div style="padding:14px;font-size:12px">まだだれもいない!1位のチャンス!</div>');
   }
 };
 
@@ -1644,16 +1696,24 @@ function flashHurt(id){ const el=document.getElementById(id); el.classList.remov
 })();
 
 /* ---------- タイトルぷに ---------- */
-(()=>{
+function renderTitlePunis(){
   const wrap=document.getElementById('titlePunis');
   wrap.innerHTML='';
-  for(let i=0;i<5;i++){
+  const n=Board.colorCount;
+  for(let i=0;i<n;i++){
     const cv=document.createElement('canvas'); cv.width=cv.height=110; cv.className='tPuni';
-    drawPuni(cv.getContext('2d'),55,58,44,i,{happy:i===2});
+    drawPuni(cv.getContext('2d'),55,58,44,i,{happy:i===Math.floor(n/2)});
     wrap.appendChild(cv);
   }
+}
+(()=>{
+  // 保存された色数モードを復元(なければ5色)
+  Board.colorCount=Store.get('colorMode',5);
+  document.getElementById('mBtn5').classList.toggle('active',Board.colorCount===5);
+  document.getElementById('mBtn4').classList.toggle('active',Board.colorCount===4);
+  renderTitlePunis();
   applyIcons();
-  wrap.addEventListener('pointerdown',()=>{ Sfx.init(); Sfx.tone(600,.08,'sine',.1,100); });
+  document.getElementById('titlePunis').addEventListener('pointerdown',()=>{ Sfx.init(); Sfx.tone(600,.08,'sine',.1,100); });
 })();
 
 /* ---------- ホーム画面に追加(PWAインストール)案内 ---------- */
