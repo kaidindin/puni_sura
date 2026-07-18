@@ -340,7 +340,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v4.4</div>
+<div class="credit">© カイディンディン ・ v4.6</div>
 <script>
 "use strict";
 /* =========================================================
@@ -730,7 +730,8 @@ const R={
       this.parts.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.5,life:1,color,r:2+Math.random()*4});
     }
   },
-  bigText(t,size){ this.texts.push({t,x:this.size/2,y:this.size/2,life:1,size}); },
+  bigText(t,size,tag){ if(tag) this.texts=this.texts.filter(x=>x.tag!==tag); this.texts.push({t,x:this.size/2,y:this.size/2,life:1,size,tag}); },
+  clearText(tag){ this.texts=this.texts.filter(x=>x.tag!==tag); },
   draw(dt){
     const ctx=this.ctx;
     ctx.clearRect(0,0,this.size,this.size);
@@ -1003,13 +1004,14 @@ const Game={
         if(!m.length) break;
         chain++;
         Board.clear(m);
-        m.forEach((c,i)=>{ if(!c.rock)R.burst(c.gx,c.gy,c.color); Sfx.pop(chain,i); });
-        if(chain>=2){ R.bigText(chain+'れんさ!!',Math.min(26+chain*6,52)); Sfx.chainVoice(chain); shake(); }
+        m.forEach((c,i)=>{ if(!c.rock)R.burst(c.gx,c.gy,c.color); if(i<4)Sfx.pop(chain,i); });
+        if(chain>=2){ R.bigText(chain+'れんさ!!',Math.min(26+chain*6,52),'chain'); Sfx.chainVoice(chain); shake(); }
         await wait(300);
         Board.cells=Board.cells.filter(c=>!c.dead);
         Board.slide(dir); // 補充なしで詰める
         await wait(150);
       }
+      R.clearText('chain'); // 連鎖が終わったら連鎖文字を消す
       this.updatePzInfo();
       const puniLeft=Board.cells.filter(c=>!c.dead&&!c.rock).length;
       if(puniLeft===0){ this.puzzleClear(); return; }
@@ -1494,25 +1496,25 @@ const Game={
         const groups=Board.groupCount(m);
         const {popped,rocks}=Board.clear(m);
         m.forEach((c,i)=>{
-          R.burst(c.gx,c.gy,c.color); Sfx.pop(chain,i);
+          R.burst(c.gx,c.gy,c.color); if(i<4) Sfx.pop(chain,i);
         });
         if(rocks) Sfx.rock();
         totalPops+=popped; totalRocks+=rocks;
         let dmg=popped*(1+(chain-1)*0.7);
-        if(groups>=2){ dmg*=1.5; this.stats.doubles++; Sfx.double(); R.bigText('ダブル!x1.5',30); }
+        if(groups>=2){ dmg*=1.5; this.stats.doubles++; Sfx.double(); R.bigText('ダブル!x1.5',30,'double'); }
         if(this.fever) dmg*=2;
         dmg=Math.floor(dmg)+rocks*3;
         totalDmg+=dmg;
         this.feverGauge+=popped*(this.fever?0:3.5);
-        if(chain>=2){ R.bigText(chain+'れんさ!!',Math.min(26+chain*6,58)); Sfx.chainVoice(chain); shake(); }
-        const lbl=document.getElementById('chainLabel');
-        lbl.textContent=chain>=2?`${chain}連鎖!`:''; lbl.style.opacity=chain>=2?1:0;
+        if(chain>=2){ R.bigText(chain+'れんさ!!',Math.min(26+chain*6,58),'chain'); Sfx.chainVoice(chain); shake(); }
         this.updateGauges();
         await wait(300);
         Board.refill(dir);
         Board.slide(dir);
         await wait(170);
       }
+      R.clearText('chain'); // 連鎖が終わったら連鎖文字を消す(残留・再表示を防ぐ)
+      document.getElementById('chainLabel').style.opacity=0;
       if(totalDmg>0) this.dealDamage(totalDmg,chain);
       if(totalPops>0){ this.lastClear=performance.now(); this.hideShuffleBtn(); } // 消せたのでタイマー・ボタンをリセット
       this.stats.maxChain=Math.max(this.stats.maxChain,chain);
@@ -1542,7 +1544,7 @@ const Game={
       while(Board.findMatches().length && cleanup++<10){
         const cm=Board.findMatches();
         Board.clear(cm);
-        cm.forEach((c,i)=>{ if(!c.rock)R.burst(c.gx,c.gy,c.color); Sfx.pop(1,i); });
+        cm.forEach((c,i)=>{ if(!c.rock)R.burst(c.gx,c.gy,c.color); if(i<4)Sfx.pop(1,i); });
         await wait(240);
         Board.refill(dir,0); Board.slide(dir);
         await wait(150);
