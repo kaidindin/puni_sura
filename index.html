@@ -340,7 +340,7 @@ body.fever #board{background:rgba(255,255,255,.12)}
     </div>
   </div>
 </div>
-<div class="credit">© カイディンディン ・ v4.3</div>
+<div class="credit">© カイディンディン ・ v4.4</div>
 <script>
 "use strict";
 /* =========================================================
@@ -1122,6 +1122,7 @@ const Game={
   startVs(minutes){
     this.mode='vs'; this.vsTurn=0; this.vsSwipes=5; this.foeMax=100;
     this.vsTimeLimit=(minutes||0)*60; this.vsTimeLeft=this.vsTimeLimit; // 0=無制限
+    this.vsPendingEnd=false; // 決着保留フラグ(後攻の手番を保証するため)
     document.getElementById('foeName').textContent='2P(れもん)';
     document.getElementById('meName').textContent='1P(そら)';
     setFace('meFace','me'); setFace('foeFace','me2');
@@ -1586,14 +1587,49 @@ const Game={
   },
 
   async vsChangeTurn(){
+    // 2P(後攻)の手番が終わった=1ラウンド完了。ここで決着判定(両者同じ手番数を保証)
+    if(this.vsTurn===1 && this.vsPendingEnd){ this.vsFinish(); return; }
     this.vsTurn=1-this.vsTurn; this.vsSwipes=5;
     this.cutin(`${this.vsTurn===0?'1P':'2P'}にこうたい!`); Sfx.go();
     this.updateTurnLabel();
     await wait(1200);
   },
 
+  // ふたりで対戦の決着(ラウンド終了時に呼ぶ)
+  vsFinish(){
+    if(this.over) return;
+    this.over=true; this.busy=true; Sfx.stopBgm(); this.setFever(false,true);
+    let winText, isWin=true, title;
+    const p1Dead=this.meHp<=0, p2Dead=this.foeHp<=0;
+    if(p1Dead&&p2Dead){
+      // 両者ダウン:残HPで判定、同点なら引き分け
+      if(this.meHp>this.foeHp){ winText='1P(そら)のかち!'; title='ぎりぎり勝利'; }
+      else if(this.foeHp>this.meHp){ winText='2P(れもん)のかち!'; title='ぎりぎり勝利'; }
+      else { winText='ひきわけ!'; title='ごかくのライバル'; isWin=false; }
+    } else if(p2Dead){ winText='1P(そら)のかち!'; title='ぷにスラ王者'; }
+    else { winText='2P(れもん)のかち!'; title='ぷにスラ王者'; }
+    setTimeout(()=>{
+      isWin?Sfx.win():Sfx.lose();
+      const big=document.getElementById('resultText');
+      big.textContent=winText; big.className='big pop '+(isWin?'win':'lose');
+      document.getElementById('shougou').textContent='称号:'+title;
+      document.getElementById('resultStats').innerHTML=
+        `1P(そら) のこりHP <b>${Math.ceil(this.meHp)}</b><br>2P(れもん) のこりHP <b>${Math.ceil(this.foeHp)}</b><br>`+
+        `<span style="font-size:11px;opacity:.7">※両プレイヤーが同じ手番数プレイした結果です</span>`;
+      this._share={winText,isWin,title,sec:0};
+      this.setResultButtons('battle');
+      UI.show('result');
+    },600);
+  },
+
   checkEnd(){
     if(this.over) return;
+    // ふたりで対戦:1PがHPを0にしても即決着させず、2Pの手番が終わるまで待つ
+    // (先攻だけが多く攻撃できる=先攻有利になるのを防ぐ)
+    if(this.mode==='vs'){
+      if(this.foeHp<=0||this.meHp<=0) this.vsPendingEnd=true;
+      return;
+    }
     if(this.foeHp<=0||this.meHp<=0){
       this.over=true; this.busy=true; Sfx.stopBgm(); this.setFever(false,true);
       const sec=Math.round((performance.now()-this.stats.time)/100)/10;
